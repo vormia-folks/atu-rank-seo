@@ -4,7 +4,7 @@ namespace Vormia\ATURankSEO;
 
 class ATURankSEO
 {
-    public const VERSION = '0.1.0';
+    public const VERSION = '1.2.0';
 
     /**
      * Absolute path to the package stubs.
