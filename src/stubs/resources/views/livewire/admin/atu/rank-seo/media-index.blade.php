@@ -1,3 +1,67 @@
+<?php
+
+use Livewire\Volt\Component;
+use Livewire\WithPagination;
+use Livewire\Attributes\Computed;
+use Vormia\ATURankSEO\Models\RankSeoMedia;
+
+new class extends Component {
+    use WithPagination;
+
+    public $search = '';
+    public $typeFilter = '';
+    public $activeFilter = '';
+
+    protected $queryString = [
+        'search' => ['except' => ''],
+        'typeFilter' => ['except' => ''],
+        'activeFilter' => ['except' => ''],
+    ];
+
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function toggleActive($id)
+    {
+        $mediaSeo = RankSeoMedia::findOrFail($id);
+        $mediaSeo->update(['is_active' => !$mediaSeo->is_active]);
+        
+        session()->flash('message', 'Media SEO entry updated successfully.');
+    }
+
+    public function delete($id)
+    {
+        RankSeoMedia::findOrFail($id)->delete();
+        session()->flash('message', 'Media SEO entry deleted successfully.');
+    }
+
+    #[Computed]
+    public function mediaEntries()
+    {
+        $query = RankSeoMedia::query();
+
+        if ($this->search) {
+            $query->where(function ($q) {
+                $q->where('media_url', 'like', '%' . $this->search . '%')
+                  ->orWhere('title', 'like', '%' . $this->search . '%')
+                  ->orWhere('alt_text', 'like', '%' . $this->search . '%');
+            });
+        }
+
+        if ($this->typeFilter) {
+            $query->where('media_type', $this->typeFilter);
+        }
+
+        if ($this->activeFilter !== '') {
+            $query->where('is_active', $this->activeFilter === '1');
+        }
+
+        return $query->orderBy('updated_at', 'desc')->paginate(15);
+    }
+}; ?>
+
 <div>
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Media SEO Manager</h2>
@@ -43,7 +107,7 @@
     <!-- Media Entries Table -->
     <div class="card">
         <div class="card-body">
-            @if ($mediaEntries->count() > 0)
+            @if ($this->mediaEntries->count() > 0)
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
@@ -58,7 +122,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($mediaEntries as $entry)
+                            @foreach ($this->mediaEntries as $entry)
                                 <tr>
                                     <td>
                                         <code class="small">{{ Str::limit($entry->media_url, 40) }}</code>
@@ -98,7 +162,7 @@
                 </div>
 
                 <div class="mt-3">
-                    {{ $mediaEntries->links() }}
+                    {{ $this->mediaEntries->links() }}
                 </div>
             @else
                 <div class="text-center py-5">

@@ -1,3 +1,66 @@
+<?php
+
+use Livewire\Volt\Component;
+use Livewire\WithPagination;
+use Livewire\Attributes\Computed;
+use Vormia\ATURankSEO\Models\RankSeoMeta;
+
+new class extends Component {
+    use WithPagination;
+
+    public $search = '';
+    public $typeFilter = '';
+    public $activeFilter = '';
+
+    protected $queryString = [
+        'search' => ['except' => ''],
+        'typeFilter' => ['except' => ''],
+        'activeFilter' => ['except' => ''],
+    ];
+
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function toggleActive($id)
+    {
+        $seoMeta = RankSeoMeta::findOrFail($id);
+        $seoMeta->update(['is_active' => !$seoMeta->is_active]);
+        
+        session()->flash('message', 'SEO entry updated successfully.');
+    }
+
+    public function delete($id)
+    {
+        RankSeoMeta::findOrFail($id)->delete();
+        session()->flash('message', 'SEO entry deleted successfully.');
+    }
+
+    #[Computed]
+    public function seoEntries()
+    {
+        $query = RankSeoMeta::query();
+
+        if ($this->search) {
+            $query->where(function ($q) {
+                $q->where('title', 'like', '%' . $this->search . '%')
+                  ->orWhere('description', 'like', '%' . $this->search . '%');
+            });
+        }
+
+        if ($this->typeFilter) {
+            $query->where('type', $this->typeFilter);
+        }
+
+        if ($this->activeFilter !== '') {
+            $query->where('is_active', $this->activeFilter === '1');
+        }
+
+        return $query->orderBy('updated_at', 'desc')->paginate(15);
+    }
+}; ?>
+
 <div>
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>SEO Entries</h2>
@@ -45,7 +108,7 @@
     <!-- SEO Entries Table -->
     <div class="card">
         <div class="card-body">
-            @if ($seoEntries->count() > 0)
+            @if ($this->seoEntries->count() > 0)
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
@@ -59,7 +122,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($seoEntries as $entry)
+                            @foreach ($this->seoEntries as $entry)
                                 <tr>
                                     <td>{{ $entry->slug_registry_id ?? 'N/A' }}</td>
                                     <td><span class="badge bg-info">{{ $entry->type }}</span></td>
@@ -92,7 +155,7 @@
                 </div>
 
                 <div class="mt-3">
-                    {{ $seoEntries->links() }}
+                    {{ $this->seoEntries->links() }}
                 </div>
             @else
                 <div class="text-center py-5">

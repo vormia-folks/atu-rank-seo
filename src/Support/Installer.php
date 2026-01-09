@@ -16,13 +16,13 @@ class Installer
     private const ROUTE_MARK_END = '// >>> ATU Rank SEO Routes END';
     private const ROUTE_BLOCK = <<<'PHP'
 // >>> ATU Rank SEO Routes START
-// Admin routes for SEO management
+// Admin routes for SEO management (Volt components)
 // Route::prefix('admin/atu/rank-seo')->middleware(['web', 'auth'])->group(function () {
-//     Route::get('/', \App\Livewire\Admin\ATU\RankSeo\IndexComponent::class)->name('admin.atu.rank-seo.index');
-//     Route::get('/settings', \App\Livewire\Admin\ATU\RankSeo\SettingsComponent::class)->name('admin.atu.rank-seo.settings');
-//     Route::get('/edit/{id}', \App\Livewire\Admin\ATU\RankSeo\EditComponent::class)->name('admin.atu.rank-seo.edit');
-//     Route::get('/media', \App\Livewire\Admin\ATU\RankSeo\MediaIndexComponent::class)->name('admin.atu.rank-seo.media.index');
-//     Route::get('/media/edit/{id}', \App\Livewire\Admin\ATU\RankSeo\MediaEditComponent::class)->name('admin.atu.rank-seo.media.edit');
+//     Route::get('/', 'livewire.admin.atu.rank-seo.index')->name('admin.atu.rank-seo.index');
+//     Route::get('/settings', 'livewire.admin.atu.rank-seo.settings')->name('admin.atu.rank-seo.settings');
+//     Route::get('/edit/{id}', 'livewire.admin.atu.rank-seo.edit')->name('admin.atu.rank-seo.edit');
+//     Route::get('/media', 'livewire.admin.atu.rank-seo.media-index')->name('admin.atu.rank-seo.media.index');
+//     Route::get('/media/edit/{id}', 'livewire.admin.atu.rank-seo.media-edit')->name('admin.atu.rank-seo.media.edit');
 // });
 // >>> ATU Rank SEO Routes END
 PHP;

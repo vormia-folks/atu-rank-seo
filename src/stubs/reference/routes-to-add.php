@@ -14,24 +14,24 @@ use Illuminate\Support\Facades\Route;
 
 // >>> ATU Rank SEO Routes START
 Route::prefix('admin/atu/rank-seo')->middleware(['web', 'auth'])->group(function () {
-    // SEO entries list
-    Route::get('/', \App\Livewire\Admin\ATU\RankSeo\IndexComponent::class)
+    // SEO entries list (Volt component)
+    Route::get('/', 'livewire.admin.atu.rank-seo.index')
         ->name('admin.atu.rank-seo.index');
 
-    // Global SEO settings
-    Route::get('/settings', \App\Livewire\Admin\ATU\RankSeo\SettingsComponent::class)
+    // Global SEO settings (Volt component)
+    Route::get('/settings', 'livewire.admin.atu.rank-seo.settings')
         ->name('admin.atu.rank-seo.settings');
 
-    // Edit page SEO
-    Route::get('/edit/{id}', \App\Livewire\Admin\ATU\RankSeo\EditComponent::class)
+    // Edit page SEO (Volt component)
+    Route::get('/edit/{id}', 'livewire.admin.atu.rank-seo.edit')
         ->name('admin.atu.rank-seo.edit');
 
-    // Media SEO manager
-    Route::get('/media', \App\Livewire\Admin\ATU\RankSeo\MediaIndexComponent::class)
+    // Media SEO manager (Volt component)
+    Route::get('/media', 'livewire.admin.atu.rank-seo.media-index')
         ->name('admin.atu.rank-seo.media.index');
 
-    // Edit media SEO
-    Route::get('/media/edit/{id}', \App\Livewire\Admin\ATU\RankSeo\MediaEditComponent::class)
+    // Edit media SEO (Volt component)
+    Route::get('/media/edit/{id}', 'livewire.admin.atu.rank-seo.media-edit')
         ->name('admin.atu.rank-seo.media.edit');
 });
 // >>> ATU Rank SEO Routes END

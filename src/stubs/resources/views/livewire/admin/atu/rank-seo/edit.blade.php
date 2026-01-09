@@ -1,3 +1,70 @@
+<?php
+
+use Livewire\Volt\Component;
+use Livewire\Attributes\Computed;
+use Vormia\ATURankSEO\Models\RankSeoMeta;
+use Vormia\ATURankSEO\Services\SeoSnapshotService;
+use Illuminate\Support\Facades\App;
+
+new class extends Component {
+    public $seoId;
+    public $title;
+    public $description;
+    public $keywords;
+    public $canonicalUrl;
+    public $robots;
+    public $useGlobal = true;
+    public $isActive = true;
+
+    public function mount($id)
+    {
+        $this->seoId = $id;
+        $seoMeta = RankSeoMeta::findOrFail($id);
+        
+        $this->title = $seoMeta->title;
+        $this->description = $seoMeta->description;
+        $this->keywords = $seoMeta->keywords;
+        $this->canonicalUrl = $seoMeta->canonical_url;
+        $this->robots = $seoMeta->robots;
+        $this->useGlobal = $seoMeta->use_global;
+        $this->isActive = $seoMeta->is_active;
+    }
+
+    public function save()
+    {
+        $this->validate([
+            'title' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'keywords' => 'nullable|string',
+            'canonicalUrl' => 'nullable|url|max:255',
+            'robots' => 'nullable|string|max:255',
+            'useGlobal' => 'boolean',
+            'isActive' => 'boolean',
+        ]);
+
+        $seoSnapshotService = App::make(SeoSnapshotService::class);
+        $seoSnapshotService->updateSeo($this->seoId, [
+            'title' => $this->title,
+            'description' => $this->description,
+            'keywords' => $this->keywords,
+            'canonical_url' => $this->canonicalUrl,
+            'robots' => $this->robots,
+            'use_global' => $this->useGlobal,
+            'is_active' => $this->isActive,
+        ]);
+
+        session()->flash('message', 'SEO entry updated successfully.');
+        
+        return redirect()->route('admin.atu.rank-seo.index');
+    }
+
+    #[Computed]
+    public function seoMeta()
+    {
+        return RankSeoMeta::findOrFail($this->seoId);
+    }
+}; ?>
+
 <div>
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Edit SEO Entry</h2>
@@ -18,12 +85,12 @@
             <div class="card-body">
                 <div class="mb-3">
                     <label class="form-label">Slug Registry ID</label>
-                    <input type="text" class="form-control" value="{{ $seoMeta->slug_registry_id ?? 'N/A' }}" disabled>
+                    <input type="text" class="form-control" value="{{ $this->seoMeta->slug_registry_id ?? 'N/A' }}" disabled>
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label">Type</label>
-                    <input type="text" class="form-control" value="{{ $seoMeta->type }}" disabled>
+                    <input type="text" class="form-control" value="{{ $this->seoMeta->type }}" disabled>
                 </div>
 
                 <div class="mb-3">
