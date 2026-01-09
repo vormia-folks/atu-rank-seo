@@ -130,6 +130,72 @@ Route::prefix('admin/atu/rank-seo')->middleware(['web', 'auth'])->group(function
 });
 ```
 
+### Manual Route Setup
+
+If automatic route injection fails, manually add the following routes to `routes/web.php` inside the `Route::middleware(['auth'])->group(function () { ... })` block:
+
+```php
+use Illuminate\Support\Facades\Route;
+
+Route::prefix('admin/atu/rank-seo')->middleware(['web', 'auth'])->group(function () {
+    // SEO entries list
+    Route::get('/', \App\Livewire\Admin\ATU\RankSeo\IndexComponent::class)
+        ->name('admin.atu.rank-seo.index');
+
+    // Global SEO settings
+    Route::get('/settings', \App\Livewire\Admin\ATU\RankSeo\SettingsComponent::class)
+        ->name('admin.atu.rank-seo.settings');
+
+    // Edit page SEO
+    Route::get('/edit/{id}', \App\Livewire\Admin\ATU\RankSeo\EditComponent::class)
+        ->name('admin.atu.rank-seo.edit');
+
+    // Media SEO manager
+    Route::get('/media', \App\Livewire\Admin\ATU\RankSeo\MediaIndexComponent::class)
+        ->name('admin.atu.rank-seo.media.index');
+
+    // Edit media SEO
+    Route::get('/media/edit/{id}', \App\Livewire\Admin\ATU\RankSeo\MediaEditComponent::class)
+        ->name('admin.atu.rank-seo.media.edit');
+});
+```
+
+### Manual Sidebar Menu Setup
+
+If automatic sidebar menu injection fails, manually add the following menu items to your admin sidebar (usually in `resources/views/components/layouts/app/sidebar.blade.php` or similar):
+
+```blade
+@if (auth()->user()?->isAdminOrSuperAdmin())
+    <hr />
+
+    {{-- SEO Management Menu Item --}}
+    <flux:navlist.item icon="magnifying-glass" :href="route('admin.atu.rank-seo.index')"
+        :current="request()->routeIs('admin.atu.rank-seo.*')" wire:navigate>
+        {{ __('SEO Management') }}
+    </flux:navlist.item>
+
+    {{-- Or with submenu items: --}}
+    <flux:navlist.group label="{{ __('SEO') }}" icon="magnifying-glass">
+        <flux:navlist.item :href="route('admin.atu.rank-seo.index')"
+            :current="request()->routeIs('admin.atu.rank-seo.index') || request()->routeIs('admin.atu.rank-seo.edit')" wire:navigate>
+            {{ __('SEO Entries') }}
+        </flux:navlist.item>
+        <flux:navlist.item :href="route('admin.atu.rank-seo.media.index')"
+            :current="request()->routeIs('admin.atu.rank-seo.media.*')" wire:navigate>
+            {{ __('Media SEO') }}
+        </flux:navlist.item>
+        <flux:navlist.item :href="route('admin.atu.rank-seo.settings')"
+            :current="request()->routeIs('admin.atu.rank-seo.settings')" wire:navigate>
+            {{ __('Global Settings') }}
+        </flux:navlist.item>
+    </flux:navlist.group>
+@endif
+```
+
+**Reference Files:**
+- Routes: `vendor/vormiaphp/atu-rank-seo/src/stubs/reference/routes-to-add.php`
+- Sidebar Menu: `vendor/vormiaphp/atu-rank-seo/src/stubs/reference/sidebar-menu-to-add.blade.php`
+
 ## Commands
 
 - `php artisan aturankseo:install` - Install the package
