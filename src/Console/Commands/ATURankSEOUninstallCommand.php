@@ -5,6 +5,9 @@ namespace Vormia\ATURankSEO\Console\Commands;
 use Vormia\ATURankSEO\ATURankSEO;
 use Vormia\ATURankSEO\Support\Installer;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 
 class ATURankSEOUninstallCommand extends Command
@@ -31,6 +34,18 @@ class ATURankSEOUninstallCommand extends Command
         if (!$force && !$this->confirm('Are you absolutely sure you want to uninstall ATU Rank SEO?', false)) {
             $this->info('❌ Uninstall cancelled.');
             return self::SUCCESS;
+        }
+
+        // Ask about migrations
+        $undoMigrations = false;
+        if (!$force) {
+            $this->newLine();
+            $this->error('⚠️  WARNING: Rolling back migrations will DELETE ALL DATA in ATU Rank SEO database tables!');
+            $this->warn('   This includes: SEO metadata, media SEO, and settings.');
+            $undoMigrations = $this->confirm('Do you wish to undo migrations? (This will rollback and delete migration files)', false);
+        } else {
+            // In force mode, default to not rolling back migrations for safety
+            $undoMigrations = false;
         }
 
         // Ask about .env variables
@@ -74,11 +89,21 @@ class ATURankSEOUninstallCommand extends Command
         $this->step('Removing routes...');
         $this->handleRoutes($results['routes'] ?? []);
 
-        // Step 4: Clear caches
+        // Step 4: Remove migrations for ATU Rank SEO
+        if ($undoMigrations) {
+            $this->step('Rolling back and removing ATU Rank SEO migrations...');
+            $this->removeMigrations();
+        } else {
+            $this->step('Skipping migration rollback...');
+            $this->line('   ⏭️  Migrations preserved (skipped by user choice).');
+            $this->line('   ⚠️  Note: Migration files and database tables remain. You may need to drop tables manually.');
+        }
+
+        // Step 5: Clear caches
         $this->step('Clearing application caches...');
         $this->clearCaches();
 
-        $this->displayCompletionMessage($removeEnvVars);
+        $this->displayCompletionMessage($removeEnvVars, $undoMigrations);
 
         return self::SUCCESS;
     }
@@ -177,9 +202,88 @@ class ATURankSEOUninstallCommand extends Command
     }
 
     /**
+     * Remove database tables
+     */
+    private function removeDatabaseTables(): void
+    {
+        try {
+            $prefix = 'atu_rankseo_';
+
+            // Get all tables with ATU Rank SEO prefix
+            $tables = DB::select("SHOW TABLES LIKE '{$prefix}%'");
+
+            if (empty($tables)) {
+                $this->line('   ℹ️  No ATU Rank SEO tables found.');
+                return;
+            }
+
+            // Disable foreign key checks
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
+            foreach ($tables as $table) {
+                $tableName = array_values((array) $table)[0];
+                DB::statement("DROP TABLE IF EXISTS `{$tableName}`");
+                $this->line("   ✅ Dropped table: {$tableName}");
+            }
+
+            // Re-enable foreign key checks
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+            $this->info('   ✅ Database tables removed successfully.');
+        } catch (\Exception $e) {
+            $this->error("   ❌ Error removing database tables: " . $e->getMessage());
+            $this->warn('   ⚠️  You may need to manually remove the tables.');
+        }
+    }
+
+    /**
+     * Remove migration files
+     */
+    private function removeMigrations(): void
+    {
+        // Step 1: Drop database tables directly using SQL (most reliable method)
+        $this->removeDatabaseTables();
+
+        // Step 2: Attempt to rollback migrations (for cleanup/verification)
+        $migrationPath = database_path('migrations');
+        if (!File::isDirectory($migrationPath)) {
+            $this->line("   ℹ️  Migrations directory does not exist");
+            return;
+        }
+
+        $removed = 0;
+        $rolledBack = false;
+
+        foreach (File::files($migrationPath) as $file) {
+            if (str_contains($file->getFilename(), 'atu_rankseo_')) {
+                try {
+                    Artisan::call('migrate:rollback', ['--path' => 'database/migrations/' . $file->getFilename(), '--force' => true]);
+                    $this->line('   Rolled back migration: ' . $file->getFilename());
+                    $rolledBack = true;
+                } catch (\Exception $e) {
+                    $this->warn('   Could not rollback migration: ' . $file->getFilename() . ' (' . $e->getMessage() . ')');
+                }
+
+                // Step 3: Delete migration files
+                File::delete($file->getPathname());
+                $removed++;
+            }
+        }
+
+        if ($removed === 0) {
+            $this->line("   ℹ️  No ATU Rank SEO migrations found to remove");
+            return;
+        }
+
+        if (! $rolledBack && $removed > 0) {
+            $this->line('   ℹ️  Note: Some migrations could not be rolled back, but tables were dropped directly.');
+        }
+    }
+
+    /**
      * Display completion message
      */
-    private function displayCompletionMessage(bool $envRemoved): void
+    private function displayCompletionMessage(bool $envRemoved, bool $migrationsUndone): void
     {
         $this->newLine();
         $this->info('🎉 ATU Rank SEO package uninstalled successfully!');
@@ -193,17 +297,32 @@ class ATURankSEOUninstallCommand extends Command
         } else {
             $this->line('   ⏭️  Environment variables preserved (skipped by user choice)');
         }
+        if ($migrationsUndone) {
+            $this->line('   ✅ ATU Rank SEO migrations rolled back and migration files deleted');
+        } else {
+            $this->line('   ⏭️  Migrations preserved (skipped by user choice)');
+        }
         $this->line('   ✅ Application caches cleared');
         $this->newLine();
 
         $this->comment('📖 Final steps:');
         $this->line('   1. Remove "vormia-folks/atu-rank-seo" from your composer.json');
         $this->line('   2. Run: composer remove vormia-folks/atu-rank-seo');
-        $this->line('   3. Review your application for any remaining ATU Rank SEO references');
+        if (!$migrationsUndone) {
+            $this->line('   3. Manually remove database tables if needed (migrations were not rolled back)');
+            $this->line('   4. Review your application for any remaining ATU Rank SEO references');
+        } else {
+            $this->line('   3. Review your application for any remaining ATU Rank SEO references');
+        }
         $this->newLine();
 
         if (!$envRemoved) {
             $this->warn('⚠️  Note: Environment variables were preserved. Remove them manually if needed.');
+            $this->newLine();
+        }
+
+        if (!$migrationsUndone) {
+            $this->warn('⚠️  Note: Migration files and database tables remain. Remove them manually if needed.');
             $this->newLine();
         }
 

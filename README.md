@@ -27,6 +27,7 @@ php artisan aturankseo:install
 ```
 
 This will:
+
 - Copy configuration files
 - Add environment variables
 - Add routes (commented out by default)
@@ -110,7 +111,7 @@ $mediaIndexer->registerMedia('media/images/product.jpg', [
 
 ## Admin Panel
 
-The package includes Livewire components for managing SEO:
+The package includes Livewire Volt components for managing SEO:
 
 - **SEO Entries List**: View and manage all SEO entries
 - **Global Settings**: Configure global SEO defaults and dynamic variables
@@ -123,9 +124,10 @@ The package includes Livewire components for managing SEO:
 Routes are added to `routes/web.php` (commented out by default). Uncomment and customize as needed:
 
 ```php
-Route::prefix('admin/atu/rank-seo')->middleware(['web', 'auth'])->group(function () {
-    Route::get('/', \App\Livewire\Admin\ATU\RankSeo\IndexComponent::class)
-        ->name('admin.atu.rank-seo.index');
+use Livewire\Volt\Volt;
+
+Route::group(['prefix' => 'admin/atu'], function () {
+    Volt::route('rank-seo', 'admin.atu.rank-seo.index')->name('admin.atu.rank-seo.index');
     // ... other routes
 });
 ```
@@ -135,30 +137,16 @@ Route::prefix('admin/atu/rank-seo')->middleware(['web', 'auth'])->group(function
 If automatic route injection fails, manually add the following routes to `routes/web.php` inside the `Route::middleware(['auth'])->group(function () { ... })` block:
 
 ```php
-use Illuminate\Support\Facades\Route;
-
-Route::prefix('admin/atu/rank-seo')->middleware(['web', 'auth'])->group(function () {
-    // SEO entries list
-    Route::get('/', \App\Livewire\Admin\ATU\RankSeo\IndexComponent::class)
-        ->name('admin.atu.rank-seo.index');
-
-    // Global SEO settings
-    Route::get('/settings', \App\Livewire\Admin\ATU\RankSeo\SettingsComponent::class)
-        ->name('admin.atu.rank-seo.settings');
-
-    // Edit page SEO
-    Route::get('/edit/{id}', \App\Livewire\Admin\ATU\RankSeo\EditComponent::class)
-        ->name('admin.atu.rank-seo.edit');
-
-    // Media SEO manager
-    Route::get('/media', \App\Livewire\Admin\ATU\RankSeo\MediaIndexComponent::class)
-        ->name('admin.atu.rank-seo.media.index');
-
-    // Edit media SEO
-    Route::get('/media/edit/{id}', \App\Livewire\Admin\ATU\RankSeo\MediaEditComponent::class)
-        ->name('admin.atu.rank-seo.media.edit');
+Route::group(['prefix' => 'admin/atu'], function () {
+    Volt::route('rank-seo', 'admin.atu.rank-seo.index')->name('admin.atu.rank-seo.index');
+    Volt::route('rank-seo/settings', 'admin.atu.rank-seo.settings')->name('admin.atu.rank-seo.settings');
+    Volt::route('rank-seo/edit/{id}', 'admin.atu.rank-seo.edit')->name('admin.atu.rank-seo.edit');
+    Volt::route('rank-seo/media', 'admin.atu.rank-seo.media-index')->name('admin.atu.rank-seo.media.index');
+    Volt::route('rank-seo/media/edit/{id}', 'admin.atu.rank-seo.media-edit')->name('admin.atu.rank-seo.media.edit');
 });
 ```
+
+**Note:** If you have configured your own starterkit, you may need to add `use Livewire\Volt\Volt;` at the top of your routes file.
 
 ### Manual Sidebar Menu Setup
 
@@ -193,6 +181,7 @@ If automatic sidebar menu injection fails, manually add the following menu items
 ```
 
 **Reference Files:**
+
 - Routes: `vendor/vormiaphp/atu-rank-seo/src/stubs/reference/routes-to-add.php`
 - Sidebar Menu: `vendor/vormiaphp/atu-rank-seo/src/stubs/reference/sidebar-menu-to-add.blade.php`
 
@@ -247,6 +236,7 @@ php artisan aturankseo:uninstall --force
 After running the uninstall command, you'll need to:
 
 1. Remove the package from `composer.json`:
+
    ```bash
    composer remove vormia-folks/atu-rank-seo
    ```
@@ -280,6 +270,7 @@ SEO fields support placeholders that are resolved on save:
 - `{current_date}` - Current date
 
 Placeholders are resolved using:
+
 1. Data provided when generating the snapshot
 2. Global SEO variables from settings
 3. Built-in variables (current_year, etc.)
