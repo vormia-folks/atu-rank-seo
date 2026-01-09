@@ -156,27 +156,23 @@ If automatic sidebar menu injection fails, manually add the following menu items
 @if (auth()->user()?->isAdminOrSuperAdmin())
     <hr />
 
-    {{-- SEO Management Menu Item --}}
+    {{-- SEO Entries Menu Item --}}
     <flux:navlist.item icon="magnifying-glass" :href="route('admin.atu.rank-seo.index')"
-        :current="request()->routeIs('admin.atu.rank-seo.*')" wire:navigate>
-        {{ __('SEO Management') }}
+        :current="request()->routeIs('admin.atu.rank-seo.index') || request()->routeIs('admin.atu.rank-seo.edit')" wire:navigate>
+        {{ __('SEO Entries') }}
     </flux:navlist.item>
 
-    {{-- Or with submenu items: --}}
-    <flux:navlist.group label="{{ __('SEO') }}" icon="magnifying-glass">
-        <flux:navlist.item :href="route('admin.atu.rank-seo.index')"
-            :current="request()->routeIs('admin.atu.rank-seo.index') || request()->routeIs('admin.atu.rank-seo.edit')" wire:navigate>
-            {{ __('SEO Entries') }}
-        </flux:navlist.item>
-        <flux:navlist.item :href="route('admin.atu.rank-seo.media.index')"
-            :current="request()->routeIs('admin.atu.rank-seo.media.*')" wire:navigate>
-            {{ __('Media SEO') }}
-        </flux:navlist.item>
-        <flux:navlist.item :href="route('admin.atu.rank-seo.settings')"
-            :current="request()->routeIs('admin.atu.rank-seo.settings')" wire:navigate>
-            {{ __('Global Settings') }}
-        </flux:navlist.item>
-    </flux:navlist.group>
+    {{-- Media SEO Menu Item --}}
+    <flux:navlist.item icon="photo" :href="route('admin.atu.rank-seo.media.index')"
+        :current="request()->routeIs('admin.atu.rank-seo.media.*')" wire:navigate>
+        {{ __('Media SEO') }}
+    </flux:navlist.item>
+
+    {{-- Global Settings Menu Item --}}
+    <flux:navlist.item icon="cog-6-tooth" :href="route('admin.atu.rank-seo.settings')"
+        :current="request()->routeIs('admin.atu.rank-seo.settings')" wire:navigate>
+        {{ __('SEO Settings') }}
+    </flux:navlist.item>
 @endif
 ```
 
