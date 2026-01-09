@@ -10,7 +10,9 @@
         "vormiaphp/vormia": "^4.4",
         "a2-atu/a2commerce": "^0.1.6"
     },
-    "suggest": {},
+    "suggest": {
+        "livewire/livewire": "Required for admin panel UI components"
+    },
     "require-dev": {
         "phpunit/phpunit": "^11.2"
     },
