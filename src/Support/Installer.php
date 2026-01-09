@@ -17,12 +17,12 @@ class Installer
     private const ROUTE_BLOCK = <<<'PHP'
 // >>> ATU Rank SEO Routes START
 // Admin routes for SEO management (Volt components)
-// Route::prefix('admin/atu/rank-seo')->middleware(['web', 'auth'])->group(function () {
-//     Route::get('/', 'livewire.admin.atu.rank-seo.index')->name('admin.atu.rank-seo.index');
-//     Route::get('/settings', 'livewire.admin.atu.rank-seo.settings')->name('admin.atu.rank-seo.settings');
-//     Route::get('/edit/{id}', 'livewire.admin.atu.rank-seo.edit')->name('admin.atu.rank-seo.edit');
-//     Route::get('/media', 'livewire.admin.atu.rank-seo.media-index')->name('admin.atu.rank-seo.media.index');
-//     Route::get('/media/edit/{id}', 'livewire.admin.atu.rank-seo.media-edit')->name('admin.atu.rank-seo.media.edit');
+// Route::prefix('admin/atu/rank-seo')->name('admin.atu.rank-seo.')->group(function () {
+//     Volt::route('index', 'admin.atu.rank-seo.index')->name('index');
+//     Volt::route('settings', 'admin.atu.rank-seo.settings')->name('settings');
+//     Volt::route('edit/{id}', 'admin.atu.rank-seo.edit')->name('edit');
+//     Volt::route('media', 'admin.atu.rank-seo.media-index')->name('media.index');
+//     Volt::route('media/edit/{id}', 'admin.atu.rank-seo.media-edit')->name('media.edit');
 // });
 // >>> ATU Rank SEO Routes END
 PHP;
