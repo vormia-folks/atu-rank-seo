@@ -203,6 +203,62 @@ If automatic sidebar menu injection fails, manually add the following menu items
 - `php artisan aturankseo:uninstall` - Uninstall the package
 - `php artisan aturankseo:help` - Display help information
 
+## Uninstallation
+
+To uninstall ATU Rank SEO from your application:
+
+```bash
+php artisan aturankseo:uninstall
+```
+
+### Uninstallation Process
+
+The uninstall command will:
+
+1. **Remove Package Files**: Delete all copied files and stubs from your application
+2. **Remove Routes**: Remove SEO routes from `routes/web.php`
+3. **Clean Environment Files**: Optionally remove environment variables from `.env` and `.env.example` (with confirmation)
+4. **Clear Application Caches**: Automatically refresh/clear all Laravel caches:
+   - Configuration cache (`config:clear`)
+   - Route cache (`route:clear`)
+   - View cache (`view:clear`)
+   - Application cache (`cache:clear`)
+
+### Uninstallation Options
+
+- `--keep-env`: Preserve environment variables in `.env` files
+- `--force`: Skip confirmation prompts
+
+**Examples:**
+
+```bash
+# Standard uninstall with prompts
+php artisan aturankseo:uninstall
+
+# Uninstall but keep environment variables
+php artisan aturankseo:uninstall --keep-env
+
+# Force uninstall without prompts
+php artisan aturankseo:uninstall --force
+```
+
+### After Uninstallation
+
+After running the uninstall command, you'll need to:
+
+1. Remove the package from `composer.json`:
+   ```bash
+   composer remove vormia-folks/atu-rank-seo
+   ```
+
+2. Review your application for any remaining ATU Rank SEO references in your code
+
+3. If you want to reinstall the package later, simply run:
+   ```bash
+   composer require vormia-folks/atu-rank-seo
+   php artisan aturankseo:install
+   ```
+
 ## Database Schema
 
 ### Tables
