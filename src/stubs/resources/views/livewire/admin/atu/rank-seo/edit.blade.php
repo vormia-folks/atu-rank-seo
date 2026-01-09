@@ -2,17 +2,32 @@
 
 use Livewire\Volt\Component;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Validate;
 use Vormia\ATURankSEO\Models\RankSeoMeta;
 use Vormia\ATURankSEO\Services\SeoSnapshotService;
 use Illuminate\Support\Facades\App;
+use App\Traits\Vrm\Livewire\WithNotifications;
 
 new class extends Component {
+    use WithNotifications;
+
     public $seoId;
+    
+    #[Validate('nullable|string|max:255')]
     public $title;
+    
+    #[Validate('nullable|string')]
     public $description;
+    
+    #[Validate('nullable|string')]
     public $keywords;
+    
+    #[Validate('nullable|url|max:255')]
     public $canonicalUrl;
+    
+    #[Validate('nullable|string|max:255')]
     public $robots;
+    
     public $useGlobal = true;
     public $isActive = true;
 
@@ -30,32 +45,33 @@ new class extends Component {
         $this->isActive = $seoMeta->is_active;
     }
 
-    public function save()
+    public function update()
     {
-        $this->validate([
-            'title' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'keywords' => 'nullable|string',
-            'canonicalUrl' => 'nullable|url|max:255',
-            'robots' => 'nullable|string|max:255',
-            'useGlobal' => 'boolean',
-            'isActive' => 'boolean',
-        ]);
+        $this->validate();
 
-        $seoSnapshotService = App::make(SeoSnapshotService::class);
-        $seoSnapshotService->updateSeo($this->seoId, [
-            'title' => $this->title,
-            'description' => $this->description,
-            'keywords' => $this->keywords,
-            'canonical_url' => $this->canonicalUrl,
-            'robots' => $this->robots,
-            'use_global' => $this->useGlobal,
-            'is_active' => $this->isActive,
-        ]);
+        try {
+            $seoSnapshotService = App::make(SeoSnapshotService::class);
+            $seoSnapshotService->updateSeo($this->seoId, [
+                'title' => $this->title,
+                'description' => $this->description,
+                'keywords' => $this->keywords,
+                'canonical_url' => $this->canonicalUrl,
+                'robots' => $this->robots,
+                'use_global' => $this->useGlobal,
+                'is_active' => $this->isActive,
+            ]);
 
-        session()->flash('message', 'SEO entry updated successfully.');
-        
-        return redirect()->route('admin.atu.rank-seo.index');
+            $this->notifySuccess(__('SEO entry updated successfully.'));
+            
+            return redirect()->route('admin.atu.rank-seo.index');
+        } catch (\Exception $e) {
+            $this->notifyError(__('Failed to update SEO entry: ' . $e->getMessage()));
+        }
+    }
+
+    public function cancel()
+    {
+        $this->notifyInfo(__('Update cancelled.'));
     }
 
     #[Computed]
@@ -66,88 +82,155 @@ new class extends Component {
 }; ?>
 
 <div>
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Edit SEO Entry</h2>
-        <a href="{{ route('admin.atu.rank-seo.index') }}" class="btn btn-secondary">
-            Back to List
-        </a>
-    </div>
+    <x-admin-panel>
+        <x-slot name="header">{{ __('Edit SEO Entry') }}</x-slot>
+        <x-slot name="desc">
+            {{ __('Update the SEO settings for this entry.') }}
+        </x-slot>
+        <x-slot name="button">
+            <a href="{{ route('admin.atu.rank-seo.index') }}"
+                class="bg-black text-white hover:bg-gray-800 px-3 py-2 rounded-md float-right text-sm font-bold">
+                Go Back
+            </a>
+        </x-slot>
 
-    @if (session()->has('message'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('message') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
+        {{-- Form Container --}}
+        <div class="overflow-hidden shadow-sm ring-1 ring-black/5 sm:rounded-lg px-4 py-5 mb-5 sm:p-6">
+            {{-- Display notifications --}}
+            {!! $this->renderNotification() !!}
 
-    <form wire:submit="save">
-        <div class="card">
-            <div class="card-body">
-                <div class="mb-3">
-                    <label class="form-label">Slug Registry ID</label>
-                    <input type="text" class="form-control" value="{{ $this->seoMeta->slug_registry_id ?? 'N/A' }}" disabled>
-                </div>
+            <form wire:submit="update">
+                <div class="space-y-12">
+                    <div class="grid grid-cols-1 gap-x-8 gap-y-10 pb-12 md:grid-cols-3">
+                        {{-- Left Column: Field Descriptions --}}
+                        <div>
+                            <h2 class="text-base/7 font-semibold text-gray-900">SEO Information</h2>
+                            <p class="mt-1 text-sm/6 text-gray-600">
+                                Configure the SEO meta tags for this entry. You can use placeholders like {make}, {model}, {year}, {site_name} in the title and description fields.
+                            </p>
+                        </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Type</label>
-                    <input type="text" class="form-control" value="{{ $this->seoMeta->type }}" disabled>
-                </div>
+                        {{-- Right Column: Form Fields --}}
+                        <div class="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 md:col-span-2">
+                            {{-- Slug Registry ID (Read-only) --}}
+                            <div class="col-span-full">
+                                <label class="block text-sm/6 font-medium text-gray-900">Slug Registry ID</label>
+                                <div class="mt-2">
+                                    <div class="flex items-center rounded-md bg-gray-50 pl-3 outline-1 -outline-offset-1 outline-gray-300">
+                                        <input type="text" value="{{ $this->seoMeta->slug_registry_id ?? 'N/A' }}" disabled
+                                            class="block min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-500 sm:text-sm/6 bg-gray-50" />
+                                    </div>
+                                </div>
+                            </div>
 
-                <div class="mb-3">
-                    <label for="title" class="form-label">Title</label>
-                    <input type="text" class="form-control" id="title" wire:model="title" placeholder="Page title">
-                    <small class="text-muted">Supports placeholders like {make}, {model}, {year}, {site_name}</small>
-                </div>
+                            {{-- Type (Read-only) --}}
+                            <div class="col-span-full">
+                                <label class="block text-sm/6 font-medium text-gray-900">Type</label>
+                                <div class="mt-2">
+                                    <div class="flex items-center rounded-md bg-gray-50 pl-3 outline-1 -outline-offset-1 outline-gray-300">
+                                        <input type="text" value="{{ $this->seoMeta->type }}" disabled
+                                            class="block min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-500 sm:text-sm/6 bg-gray-50" />
+                                    </div>
+                                </div>
+                            </div>
 
-                <div class="mb-3">
-                    <label for="description" class="form-label">Meta Description</label>
-                    <textarea class="form-control" id="description" wire:model="description" rows="3" placeholder="Meta description"></textarea>
-                </div>
+                            {{-- Title Field --}}
+                            <div class="col-span-full">
+                                <label for="title" class="block text-sm/6 font-medium text-gray-900">Title</label>
+                                <div class="mt-2">
+                                    <div class="flex items-center rounded-md bg-white pl-3 outline-1 -outline-offset-1 outline-gray-300 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600">
+                                        <input type="text" id="title" wire:model="title" placeholder="Page title"
+                                            class="block min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6" />
+                                    </div>
+                                    <span class="text-red-500 text-sm italic"> {{ $errors->first('title') }}</span>
+                                </div>
+                                <p class="mt-3 text-sm/6 text-gray-600">Supports placeholders like {make}, {model}, {year}, {site_name}</p>
+                            </div>
 
-                <div class="mb-3">
-                    <label for="keywords" class="form-label">Meta Keywords</label>
-                    <textarea class="form-control" id="keywords" wire:model="keywords" rows="2" placeholder="Comma-separated keywords"></textarea>
-                </div>
+                            {{-- Description Field --}}
+                            <div class="col-span-full">
+                                <label for="description" class="block text-sm/6 font-medium text-gray-900">Meta Description</label>
+                                <div class="mt-2">
+                                    <textarea id="description" wire:model="description" rows="3" placeholder="Meta description"
+                                        class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"></textarea>
+                                    <span class="text-red-500 text-sm italic"> {{ $errors->first('description') }}</span>
+                                </div>
+                            </div>
 
-                <div class="mb-3">
-                    <label for="canonicalUrl" class="form-label">Canonical URL</label>
-                    <input type="url" class="form-control" id="canonicalUrl" wire:model="canonicalUrl" placeholder="https://example.com/page">
-                </div>
+                            {{-- Keywords Field --}}
+                            <div class="col-span-full">
+                                <label for="keywords" class="block text-sm/6 font-medium text-gray-900">Meta Keywords</label>
+                                <div class="mt-2">
+                                    <textarea id="keywords" wire:model="keywords" rows="2" placeholder="Comma-separated keywords"
+                                        class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"></textarea>
+                                    <span class="text-red-500 text-sm italic"> {{ $errors->first('keywords') }}</span>
+                                </div>
+                            </div>
 
-                <div class="mb-3">
-                    <label for="robots" class="form-label">Robots Meta</label>
-                    <input type="text" class="form-control" id="robots" wire:model="robots" placeholder="noindex, nofollow">
-                    <small class="text-muted">e.g., noindex, nofollow, index, follow</small>
-                </div>
+                            {{-- Canonical URL Field --}}
+                            <div class="col-span-full">
+                                <label for="canonicalUrl" class="block text-sm/6 font-medium text-gray-900">Canonical URL</label>
+                                <div class="mt-2">
+                                    <div class="flex items-center rounded-md bg-white pl-3 outline-1 -outline-offset-1 outline-gray-300 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600">
+                                        <input type="url" id="canonicalUrl" wire:model="canonicalUrl" placeholder="https://example.com/page"
+                                            class="block min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6" />
+                                    </div>
+                                    <span class="text-red-500 text-sm italic"> {{ $errors->first('canonicalUrl') }}</span>
+                                </div>
+                            </div>
 
-                <div class="mb-3">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" wire:model="useGlobal" id="useGlobal">
-                        <label class="form-check-label" for="useGlobal">
-                            Use Global SEO (merge with global defaults)
-                        </label>
+                            {{-- Robots Field --}}
+                            <div class="col-span-full">
+                                <label for="robots" class="block text-sm/6 font-medium text-gray-900">Robots Meta</label>
+                                <div class="mt-2">
+                                    <div class="flex items-center rounded-md bg-white pl-3 outline-1 -outline-offset-1 outline-gray-300 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600">
+                                        <input type="text" id="robots" wire:model="robots" placeholder="noindex, nofollow"
+                                            class="block min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6" />
+                                    </div>
+                                    <span class="text-red-500 text-sm italic"> {{ $errors->first('robots') }}</span>
+                                </div>
+                                <p class="mt-3 text-sm/6 text-gray-600">e.g., noindex, nofollow, index, follow</p>
+                            </div>
+
+                            {{-- Use Global Checkbox --}}
+                            <div class="col-span-full">
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="useGlobal" wire:model="useGlobal"
+                                        class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600" />
+                                    <label for="useGlobal" class="ml-3 block text-sm/6 font-medium text-gray-900">
+                                        Use Global SEO (merge with global defaults)
+                                    </label>
+                                </div>
+                            </div>
+
+                            {{-- Is Active Checkbox --}}
+                            <div class="col-span-full">
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="isActive" wire:model="isActive"
+                                        class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600" />
+                                    <label for="isActive" class="ml-3 block text-sm/6 font-medium text-gray-900">
+                                        Active
+                                    </label>
+                                </div>
+                            </div>
+
+                            {{-- Form Actions --}}
+                            <div class="col-span-full">
+                                <div class="flex items-center justify-end gap-x-3 border-t border-gray-900/10 pt-4">
+                                    <button type="button" wire:click="cancel"
+                                        class="text-sm font-semibold text-gray-900">Cancel</button>
+
+                                    <button type="submit" wire:loading.attr="disabled"
+                                        class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                                        <span wire:loading.remove>Update Changes</span>
+                                        <span wire:loading>Updating...</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                <div class="mb-3">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" wire:model="isActive" id="isActive">
-                        <label class="form-check-label" for="isActive">
-                            Active
-                        </label>
-                    </div>
-                </div>
-            </div>
-            <div class="card-footer">
-                <div class="d-flex justify-content-end">
-                    <a href="{{ route('admin.atu.rank-seo.index') }}" class="btn btn-secondary me-2">
-                        Cancel
-                    </a>
-                    <button type="submit" class="btn btn-primary">
-                        Save Changes
-                    </button>
-                </div>
-            </div>
+            </form>
         </div>
-    </form>
+    </x-admin-panel>
 </div>

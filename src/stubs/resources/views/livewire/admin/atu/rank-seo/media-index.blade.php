@@ -4,9 +4,11 @@ use Livewire\Volt\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Computed;
 use Vormia\ATURankSEO\Models\RankSeoMedia;
+use App\Traits\Vrm\Livewire\WithNotifications;
 
 new class extends Component {
     use WithPagination;
+    use WithNotifications;
 
     public $search = '';
     public $typeFilter = '';
@@ -18,23 +20,52 @@ new class extends Component {
         'activeFilter' => ['except' => ''],
     ];
 
-    public function updatingSearch()
+    public function updatedSearch()
     {
         $this->resetPage();
     }
 
-    public function toggleActive($id)
+    public function updatedTypeFilter()
     {
-        $mediaSeo = RankSeoMedia::findOrFail($id);
-        $mediaSeo->update(['is_active' => !$mediaSeo->is_active]);
-        
-        session()->flash('message', 'Media SEO entry updated successfully.');
+        $this->resetPage();
+    }
+
+    public function updatedActiveFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function activate($id)
+    {
+        try {
+            $mediaSeo = RankSeoMedia::findOrFail($id);
+            $mediaSeo->update(['is_active' => true]);
+            $this->notifySuccess(__('Media SEO entry was activated successfully!'));
+        } catch (\Exception $e) {
+            $this->notifyError(__('Failed to activate media SEO entry: ' . $e->getMessage()));
+        }
+    }
+
+    public function deactivate($id)
+    {
+        try {
+            $mediaSeo = RankSeoMedia::findOrFail($id);
+            $mediaSeo->update(['is_active' => false]);
+            $this->notifySuccess(__('Media SEO entry was deactivated successfully!'));
+        } catch (\Exception $e) {
+            $this->notifyError(__('Failed to deactivate media SEO entry: ' . $e->getMessage()));
+        }
     }
 
     public function delete($id)
     {
-        RankSeoMedia::findOrFail($id)->delete();
-        session()->flash('message', 'Media SEO entry deleted successfully.');
+        try {
+            $mediaSeo = RankSeoMedia::findOrFail($id);
+            $mediaSeo->delete();
+            $this->notifySuccess(__('Media SEO entry was deleted successfully!'));
+        } catch (\Exception $e) {
+            $this->notifyError(__('Failed to delete media SEO entry: ' . $e->getMessage()));
+        }
     }
 
     #[Computed]
@@ -63,112 +94,181 @@ new class extends Component {
 }; ?>
 
 <div>
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Media SEO Manager</h2>
-        <div>
-            <a href="{{ route('admin.atu.rank-seo.index') }}" class="btn btn-secondary">
+    <x-admin-panel>
+        <x-slot name="header">{{ __('Media SEO Manager') }}</x-slot>
+        <x-slot name="desc">
+            {{ __('Manage SEO metadata for media files.') }}
+            {{ __('You can edit, enable/disable, or delete media SEO entries here.') }}
+        </x-slot>
+        <x-slot name="button">
+            <a href="{{ route('admin.atu.rank-seo.index') }}"
+                class="bg-black text-white hover:bg-gray-800 px-3 py-2 rounded-md float-right text-sm font-bold">
                 SEO Entries
             </a>
-        </div>
-    </div>
+        </x-slot>
 
-    @if (session()->has('message'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('message') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-
-    <!-- Search and Filters -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <input type="text" wire:model.live="search" class="form-control" placeholder="Search by URL, title, or alt text...">
-                </div>
-                <div class="col-md-3">
-                    <select wire:model.live="typeFilter" class="form-select">
-                        <option value="">All Types</option>
-                        <option value="image">Image</option>
-                        <option value="file">File</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <select wire:model.live="activeFilter" class="form-select">
-                        <option value="">All Status</option>
-                        <option value="1">Active</option>
-                        <option value="0">Inactive</option>
-                    </select>
+        {{-- Search & Filter --}}
+        <div class="my-4">
+            <div class="bg-white shadow-sm sm:rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <h3 class="text-base font-semibold text-gray-900">Search & Filter data</h3>
+                    <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                        <div>
+                            <input type="text" wire:model.live.debounce.300ms="search"
+                                class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                                placeholder="Search by URL, title, or alt text..." />
+                        </div>
+                        <div>
+                            <select wire:model.live="typeFilter"
+                                class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
+                                <option value="">All Types</option>
+                                <option value="image">Image</option>
+                                <option value="file">File</option>
+                            </select>
+                        </div>
+                        <div>
+                            <select wire:model.live="activeFilter"
+                                class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
+                                <option value="">All Status</option>
+                                <option value="1">Active</option>
+                                <option value="0">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Media Entries Table -->
-    <div class="card">
-        <div class="card-body">
-            @if ($this->mediaEntries->count() > 0)
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Media URL</th>
-                                <th>Type</th>
-                                <th>Title</th>
-                                <th>Alt Text</th>
-                                <th>Status</th>
-                                <th>Last Updated</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($this->mediaEntries as $entry)
-                                <tr>
-                                    <td>
-                                        <code class="small">{{ Str::limit($entry->media_url, 40) }}</code>
-                                        @if ($entry->media_type === 'image')
-                                            <br>
-                                            <img src="{{ asset($entry->media_url) }}" alt="{{ $entry->alt_text }}" style="max-width: 50px; max-height: 50px;" class="mt-1">
-                                        @endif
-                                    </td>
-                                    <td><span class="badge bg-{{ $entry->media_type === 'image' ? 'primary' : 'secondary' }}">{{ $entry->media_type }}</span></td>
-                                    <td>{{ Str::limit($entry->title ?? 'N/A', 30) }}</td>
-                                    <td>{{ Str::limit($entry->alt_text ?? 'N/A', 30) }}</td>
-                                    <td>
-                                        <span class="badge bg-{{ $entry->is_active ? 'success' : 'secondary' }}">
-                                            {{ $entry->is_active ? 'Active' : 'Inactive' }}
-                                        </span>
-                                    </td>
-                                    <td>{{ $entry->updated_at->format('Y-m-d H:i') }}</td>
-                                    <td>
-                                        <div class="btn-group btn-group-sm">
-                                            <a href="{{ route('admin.atu.rank-seo.media.edit', $entry->id) }}" class="btn btn-primary">
-                                                Edit
-                                            </a>
-                                            <button wire:click="toggleActive({{ $entry->id }})" class="btn btn-{{ $entry->is_active ? 'warning' : 'success' }}">
-                                                {{ $entry->is_active ? 'Deactivate' : 'Activate' }}
-                                            </button>
-                                            <button wire:click="delete({{ $entry->id }})" 
-                                                    wire:confirm="Are you sure you want to delete this media SEO entry?"
-                                                    class="btn btn-danger">
-                                                Delete
-                                            </button>
+        {{-- Display notifications --}}
+        {!! $this->renderNotification() !!}
+
+        {{-- Table --}}
+        <div class="overflow-hidden shadow-sm ring-1 ring-black/5 sm:rounded-lg mt-2">
+            <table class="min-w-full divide-y divide-gray-300">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="py-3.5 pr-3 pl-4 text-left text-sm font-semibold text-gray-900 sm:pl-3">Media URL</th>
+                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Type</th>
+                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Title</th>
+                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Alt Text</th>
+                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
+                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Last Updated</th>
+                        <th scope="col" class="relative py-3.5 pr-4 pl-3 sm:pr-3">
+                            <span class="sr-only">Actions</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white">
+                    @if ($this->mediaEntries->isNotEmpty())
+                        @foreach ($this->mediaEntries as $entry)
+                            <tr class="even:bg-gray-50">
+                                <td class="py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-3">
+                                    <code class="text-xs text-gray-600">{{ Str::limit($entry->media_url, 40) }}</code>
+                                    @if ($entry->media_type === 'image')
+                                        <div class="mt-1">
+                                            <img src="{{ asset($entry->media_url) }}" alt="{{ $entry->alt_text }}" 
+                                                class="max-w-[50px] max-h-[50px] object-cover rounded-md border border-gray-300" />
                                         </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                                    @endif
+                                </td>
+                                <td class="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-sm {{ $entry->media_type === 'image' ? 'bg-blue-400' : 'bg-gray-400' }} text-white">
+                                        {{ $entry->media_type }}
+                                    </span>
+                                </td>
+                                <td class="px-3 py-4 text-sm whitespace-nowrap text-gray-500">{{ Str::limit($entry->title ?? 'N/A', 30) }}</td>
+                                <td class="px-3 py-4 text-sm whitespace-nowrap text-gray-500">{{ Str::limit($entry->alt_text ?? 'N/A', 30) }}</td>
+                                <td class="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
+                                    @if ($entry->is_active)
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-sm bg-green-400 text-white">
+                                            Active
+                                        </span>
+                                    @else
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-sm bg-red-400 text-white">
+                                            Inactive
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="px-3 py-4 text-sm whitespace-nowrap text-gray-500">{{ $entry->updated_at->format('Y-m-d H:i') }}</td>
+                                <td class="relative py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-3">
+                                    {{-- Edit Button --}}
+                                    <a href="{{ route('admin.atu.rank-seo.media.edit', $entry->id) }}"
+                                        class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white shadow-xs hover:bg-indigo-500">
+                                        Edit
+                                    </a>
 
-                <div class="mt-3">
+                                    {{-- Activate Button --}}
+                                    @if (!$entry->is_active)
+                                        <button type="button" wire:click="activate({{ $entry->id }})"
+                                            class="inline-flex items-center gap-x-1.5 rounded-md bg-green-600 px-2.5 py-1 text-sm font-semibold text-white shadow-xs hover:bg-green-500">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-4">
+                                                <path fill-rule="evenodd"
+                                                    d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
+                                    @endif
+
+                                    {{-- Deactivate Button --}}
+                                    @if ($entry->is_active)
+                                        <button type="button" wire:click="deactivate({{ $entry->id }})"
+                                            class="cursor-pointer inline-flex items-center gap-x-1.5 rounded-md bg-yellow-400 px-2.5 py-1 text-sm font-semibold text-white shadow-xs hover:bg-yellow-500">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-4">
+                                                <path fill-rule="evenodd"
+                                                    d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-1.72 6.97a.75.75 0 1 0-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 1 0 1.06 1.06L12 13.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L13.06 12l1.72-1.72a.75.75 0 1 0-1.06-1.06L12 10.94l-1.72-1.72Z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
+                                    @endif
+
+                                    {{-- Delete Button --}}
+                                    <button type="button" wire:click="$js.confirmDelete({{ $entry->id }})"
+                                        class="inline-flex items-center gap-x-1.5 rounded-md bg-red-600 px-2.5 py-1 text-xs font-semibold text-white shadow-xs hover:bg-red-500">
+                                        Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        @endforeach
+                    @else
+                        <tr class="even:bg-gray-50">
+                            <td colspan="7"
+                                class="py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-3 text-center">
+                                <span class="text-gray-500 text-2xl font-bold">No results found</span>
+                            </td>
+                        </tr>
+                    @endif
+                </tbody>
+            </table>
+        </div>
+
+        {{-- Pagination --}}
+        <div class="mt-8">
+            @if ($this->mediaEntries->hasPages())
+                <div class="p-2">
                     {{ $this->mediaEntries->links() }}
-                </div>
-            @else
-                <div class="text-center py-5">
-                    <p class="text-muted">No media SEO entries found.</p>
                 </div>
             @endif
         </div>
-    </div>
+    </x-admin-panel>
+
+    @script
+        <script>
+            $js('confirmDelete', (id) => {
+                Swal.fire({
+                    title: 'Are you sure you want to delete?',
+                    text: "This media SEO entry will be removed permanently.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'No, cancel!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $wire.delete(id);
+                    }
+                });
+            });
+        </script>
+    @endscript
 </div>
