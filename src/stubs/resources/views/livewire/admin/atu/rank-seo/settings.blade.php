@@ -2,7 +2,7 @@
 
 use Livewire\Volt\Component;
 use Livewire\Attributes\Validate;
-use Vormia\ATURankSEO\Models\RankSeoSettings;
+use Atu\RankSeo\Models\RankSeoSettings;
 use App\Traits\Vrm\Livewire\WithNotifications;
 
 new class extends Component {

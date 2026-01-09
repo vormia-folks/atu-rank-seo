@@ -3,8 +3,8 @@
 use Livewire\Volt\Component;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Validate;
-use Vormia\ATURankSEO\Models\RankSeoMeta;
-use Vormia\ATURankSEO\Services\SeoSnapshotService;
+use Atu\RankSeo\Models\RankSeoMeta;
+use Atu\RankSeo\Services\SeoSnapshotService;
 use Illuminate\Support\Facades\App;
 use App\Traits\Vrm\Livewire\WithNotifications;
 

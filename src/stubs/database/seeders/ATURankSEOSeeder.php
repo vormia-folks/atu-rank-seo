@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Vormia\ATURankSEO\Models\RankSeoSettings;
+use Atu\RankSeo\Models\RankSeoSettings;
 
 class ATURankSEOSeeder extends Seeder
 {

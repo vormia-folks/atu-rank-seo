@@ -3,7 +3,7 @@
 use Livewire\Volt\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Computed;
-use Vormia\ATURankSEO\Models\RankSeoMeta;
+use Atu\RankSeo\Models\RankSeoMeta;
 use App\Traits\Vrm\Livewire\WithNotifications;
 
 new class extends Component {
