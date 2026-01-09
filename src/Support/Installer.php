@@ -16,7 +16,7 @@ class Installer
     private const ROUTE_MARK_END = '// >>> ATU Rank SEO Routes END';
     private const ROUTE_BLOCK = <<<'PHP'
 // >>> ATU Rank SEO Routes START
-// Admin routes for SEO management (Volt components)
+// Admin routes for SEO management
 // Route::prefix('admin/atu/rank-seo')->name('admin.atu.rank-seo.')->group(function () {
 //     Volt::route('index', 'admin.atu.rank-seo.index')->name('index');
 //     Volt::route('settings', 'admin.atu.rank-seo.settings')->name('settings');
