@@ -137,12 +137,12 @@ Route::group(['prefix' => 'admin/atu'], function () {
 If automatic route injection fails, manually add the following routes to `routes/web.php` inside the `Route::middleware(['auth'])->group(function () { ... })` block:
 
 ```php
-Route::group(['prefix' => 'admin/atu'], function () {
-    Volt::route('rank-seo', 'admin.atu.rank-seo.index')->name('admin.atu.rank-seo.index');
-    Volt::route('rank-seo/settings', 'admin.atu.rank-seo.settings')->name('admin.atu.rank-seo.settings');
-    Volt::route('rank-seo/edit/{id}', 'admin.atu.rank-seo.edit')->name('admin.atu.rank-seo.edit');
-    Volt::route('rank-seo/media', 'admin.atu.rank-seo.media-index')->name('admin.atu.rank-seo.media.index');
-    Volt::route('rank-seo/media/edit/{id}', 'admin.atu.rank-seo.media-edit')->name('admin.atu.rank-seo.media.edit');
+Route::prefix('admin/atu/rank-seo')->name('admin.atu.rank-seo.')->group(function () {
+    Volt::route('index', 'admin.atu.rank-seo.index')->name('index');
+    Volt::route('settings', 'admin.atu.rank-seo.settings')->name('settings');
+    Volt::route('edit/{id}', 'admin.atu.rank-seo.edit')->name('edit');
+    Volt::route('media', 'admin.atu.rank-seo.media-index')->name('media.index');
+    Volt::route('media/edit/{id}', 'admin.atu.rank-seo.media-edit')->name('media.edit');
 });
 ```
 
