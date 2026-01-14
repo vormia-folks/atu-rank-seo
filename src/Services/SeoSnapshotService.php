@@ -19,10 +19,10 @@ class SeoSnapshotService
      */
     public function generateForSlug(string $slug, array $data): void
     {
-        // Get slug registry ID
-        $slugRegistry = $this->getSlugRegistryBySlug($slug);
+        // Get or create slug registry
+        $slugRegistry = $this->getOrCreateSlugRegistryBySlug($slug);
         if (!$slugRegistry) {
-            Log::warning('SlugRegistry not found for slug', ['slug' => $slug]);
+            Log::error('Failed to get or create SlugRegistry for slug', ['slug' => $slug]);
 
             return;
         }
@@ -190,6 +190,39 @@ class SeoSnapshotService
             return $slugRegistryModel::where('slug', $slug)->first();
         } catch (\Exception $e) {
             Log::warning('Failed to retrieve SlugRegistry by slug', [
+                'slug' => $slug,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Get or create SlugRegistry by slug.
+     * Creates the registry entry if it doesn't exist.
+     */
+    private function getOrCreateSlugRegistryBySlug(string $slug)
+    {
+        try {
+            $slugRegistryModel = config('vormia.models.slug_registry', 'App\Models\SlugRegistry');
+
+            if (!class_exists($slugRegistryModel)) {
+                Log::warning('SlugRegistry model class does not exist', [
+                    'model' => $slugRegistryModel,
+                    'slug' => $slug,
+                ]);
+
+                return null;
+            }
+
+            // Use firstOrCreate to get existing or create new SlugRegistry
+            return $slugRegistryModel::firstOrCreate(
+                ['slug' => $slug],
+                ['slug' => $slug] // Additional attributes if needed for creation
+            );
+        } catch (\Exception $e) {
+            Log::error('Failed to get or create SlugRegistry by slug', [
                 'slug' => $slug,
                 'error' => $e->getMessage(),
             ]);
