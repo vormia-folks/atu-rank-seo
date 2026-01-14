@@ -1,5 +1,22 @@
 # Release Notes
 
+## [v1.2.1] - 2025-01-XX
+
+### Bug Fixes
+- **Fixed SlugRegistry Auto-Creation**: Fixed issue where SEO data was not being saved when the SlugRegistry entry didn't exist. The `SeoSnapshotService::generateForSlug()` method now automatically creates a SlugRegistry entry if it doesn't exist, ensuring SEO data is always saved successfully
+- **Corrected Vormia Namespace**: Updated all SlugRegistry model references to use the correct Vormia namespace `App\Models\Vrm\SlugRegistry` instead of `App\Models\SlugRegistry`. This affects:
+  - `SeoSnapshotService` (getSlugRegistryBySlug and getOrCreateSlugRegistryBySlug methods)
+  - `SeoResolverService` (getSlugRegistryBySlug method)
+  - `RankSeoMeta` model (slugRegistry relationship)
+  - `RankSeoMedia` model (slugRegistry relationship)
+  - Configuration file default values
+
+### Improvements
+- **Enhanced Error Handling**: Improved error logging when SlugRegistry operations fail, with more descriptive error messages
+- **Better Code Consistency**: All SlugRegistry references now consistently use the Vormia/Vrm namespace pattern
+
+---
+
 ## [v1.2.0] - 2024-12-XX
 
 ### Improvements
