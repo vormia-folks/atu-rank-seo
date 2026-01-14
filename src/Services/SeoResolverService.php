@@ -141,7 +141,7 @@ class SeoResolverService
     private function getSlugRegistryBySlug(string $slug)
     {
         try {
-            $slugRegistryModel = config('vormia.models.slug_registry', 'App\Models\SlugRegistry');
+            $slugRegistryModel = config('vormia.models.slug_registry', 'App\Models\Vrm\SlugRegistry');
 
             if (!class_exists($slugRegistryModel)) {
                 return null;

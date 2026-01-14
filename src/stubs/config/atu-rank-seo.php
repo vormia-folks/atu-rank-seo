@@ -59,7 +59,7 @@ return [
     | This is used for resolving slugs to SEO data.
     |
     */
-    'slug_registry_model' => config('vormia.models.slug_registry', 'App\Models\SlugRegistry'),
+    'slug_registry_model' => config('vormia.models.slug_registry', 'App\Models\Vrm\SlugRegistry'),
 
     /*
     |--------------------------------------------------------------------------

@@ -181,7 +181,7 @@ class SeoSnapshotService
     private function getSlugRegistryBySlug(string $slug)
     {
         try {
-            $slugRegistryModel = config('vormia.models.slug_registry', 'App\Models\SlugRegistry');
+            $slugRegistryModel = config('vormia.models.slug_registry', 'App\Models\Vrm\SlugRegistry');
 
             if (!class_exists($slugRegistryModel)) {
                 return null;
@@ -205,7 +205,7 @@ class SeoSnapshotService
     private function getOrCreateSlugRegistryBySlug(string $slug)
     {
         try {
-            $slugRegistryModel = config('vormia.models.slug_registry', 'App\Models\SlugRegistry');
+            $slugRegistryModel = config('vormia.models.slug_registry', 'App\Models\Vrm\SlugRegistry');
 
             if (!class_exists($slugRegistryModel)) {
                 Log::warning('SlugRegistry model class does not exist', [

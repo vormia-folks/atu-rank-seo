@@ -32,7 +32,7 @@ class RankSeoMedia extends Model
     {
         // Note: This assumes vrm_slug_registry table exists via Vormia package
         return $this->belongsTo(
-            config('vormia.models.slug_registry', 'App\Models\SlugRegistry'),
+            config('vormia.models.slug_registry', 'App\Models\Vrm\SlugRegistry'),
             'slug_registry_id'
         );
     }

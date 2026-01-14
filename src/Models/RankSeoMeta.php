@@ -34,7 +34,7 @@ class RankSeoMeta extends Model
         // Note: This assumes vrm_slug_registry table exists via Vormia package
         // We use a dynamic relationship since we don't control that model
         return $this->belongsTo(
-            config('vormia.models.slug_registry', 'App\Models\SlugRegistry'),
+            config('vormia.models.slug_registry', 'App\Models\Vrm\SlugRegistry'),
             'slug_registry_id'
         );
     }
