@@ -6,9 +6,9 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
-        "laravel/framework": "^12.0",
-        "vormiaphp/vormia": "^4.4",
-        "a2-atu/a2commerce": "^0.1.6"
+        "laravel/framework": "^12.0|^13.0",
+        "vormiaphp/vormia": "^5.4",
+        "a2-atu/a2commerce": "^0.2.0"
     },
     "suggest": {
         "livewire/livewire": "Required for admin panel UI components"
