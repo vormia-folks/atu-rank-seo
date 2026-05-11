@@ -1,96 +1,3 @@
-<?php
-
-use Livewire\Volt\Component;
-use Livewire\WithPagination;
-use Livewire\Attributes\Computed;
-use Vormia\ATURankSEO\Models\RankSeoMeta;
-use App\Traits\Vrm\Livewire\WithNotifications;
-
-new class extends Component {
-    use WithPagination;
-    use WithNotifications;
-
-    public $search = '';
-    public $typeFilter = '';
-    public $activeFilter = '';
-
-    protected $queryString = [
-        'search' => ['except' => ''],
-        'typeFilter' => ['except' => ''],
-        'activeFilter' => ['except' => ''],
-    ];
-
-    public function updatedSearch()
-    {
-        $this->resetPage();
-    }
-
-    public function updatedTypeFilter()
-    {
-        $this->resetPage();
-    }
-
-    public function updatedActiveFilter()
-    {
-        $this->resetPage();
-    }
-
-    public function activate($id)
-    {
-        try {
-            $seoMeta = RankSeoMeta::findOrFail($id);
-            $seoMeta->update(['is_active' => true]);
-            $this->notifySuccess(__('SEO entry was activated successfully!'));
-        } catch (\Exception $e) {
-            $this->notifyError(__('Failed to activate SEO entry: ' . $e->getMessage()));
-        }
-    }
-
-    public function deactivate($id)
-    {
-        try {
-            $seoMeta = RankSeoMeta::findOrFail($id);
-            $seoMeta->update(['is_active' => false]);
-            $this->notifySuccess(__('SEO entry was deactivated successfully!'));
-        } catch (\Exception $e) {
-            $this->notifyError(__('Failed to deactivate SEO entry: ' . $e->getMessage()));
-        }
-    }
-
-    public function delete($id)
-    {
-        try {
-            $seoMeta = RankSeoMeta::findOrFail($id);
-            $seoMeta->delete();
-            $this->notifySuccess(__('SEO entry was deleted successfully!'));
-        } catch (\Exception $e) {
-            $this->notifyError(__('Failed to delete SEO entry: ' . $e->getMessage()));
-        }
-    }
-
-    #[Computed]
-    public function seoEntries()
-    {
-        $query = RankSeoMeta::query();
-
-        if ($this->search) {
-            $query->where(function ($q) {
-                $q->where('title', 'like', '%' . $this->search . '%')->orWhere('description', 'like', '%' . $this->search . '%');
-            });
-        }
-
-        if ($this->typeFilter) {
-            $query->where('type', $this->typeFilter);
-        }
-
-        if ($this->activeFilter !== '') {
-            $query->where('is_active', $this->activeFilter === '1');
-        }
-
-        return $query->orderBy('updated_at', 'desc')->paginate(15);
-    }
-}; ?>
-
 <div>
 	<x-admin-panel>
 		<x-slot name="header">{{ __('SEO Entries') }}</x-slot>
@@ -130,7 +37,6 @@ new class extends Component {
 			</div>
 		</div>
 
-		{{-- Display notifications --}}
 		{!! $this->renderNotification() !!}
 
 		{{-- Table --}}
@@ -183,13 +89,11 @@ new class extends Component {
 										{{ $entry->updated_at->format('Y-m-d H:i') }}</td>
 									<td class="relative py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-3">
 										<div class="flex items-center justify-end gap-x-2">
-											{{-- Edit Button --}}
 											<a href="{{ route('admin.atu.rank-seo.edit', $entry->id) }}"
 												class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
 												Edit
 											</a>
 
-											{{-- Activate Button --}}
 											@if (!$entry->is_active)
 												<button type="button" wire:click="activate({{ $entry->id }})"
 													class="inline-flex items-center gap-x-1.5 rounded-md bg-green-600 px-2.5 py-1 text-sm font-semibold text-white shadow-xs hover:bg-green-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600">
@@ -201,7 +105,6 @@ new class extends Component {
 												</button>
 											@endif
 
-											{{-- Deactivate Button --}}
 											@if ($entry->is_active)
 												<button type="button" wire:click="deactivate({{ $entry->id }})"
 													class="inline-flex items-center gap-x-1.5 rounded-md bg-yellow-400 px-2.5 py-1 text-sm font-semibold text-white shadow-xs hover:bg-yellow-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-600">
@@ -213,7 +116,6 @@ new class extends Component {
 												</button>
 											@endif
 
-											{{-- Delete Button --}}
 											<button type="button" wire:click="$js.confirmDelete({{ $entry->id }})"
 												class="inline-flex items-center gap-x-1.5 rounded-md bg-red-600 px-2.5 py-1 text-xs font-semibold text-white shadow-xs hover:bg-red-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
 												Delete
@@ -235,7 +137,6 @@ new class extends Component {
 			</div>
 		</div>
 
-		{{-- Pagination --}}
 		<div class="mt-8">
 			@if ($this->seoEntries->hasPages())
 				<div class="p-2">

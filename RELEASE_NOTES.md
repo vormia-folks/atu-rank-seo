@@ -1,5 +1,23 @@
 # Release Notes
 
+## [v1.3.0] - 2026-05-11
+
+### Breaking changes
+
+- **Package-first install**: The installer no longer copies migrations, views, or config into the host app. Migrations load via `loadMigrationsFrom`; admin UI views load via `loadViewsFrom`; optional `php artisan vendor:publish --tag=aturankseo-config` publishes config only.
+- **Routes**: Admin routes are registered by `ATURankSEOServiceProvider` (Livewire 4 full-page component classes). The old commented block injected into `routes/web.php` is removed. Delete any leftover `// >>> ATU Rank SEO Routes` block from a previous install if it is still present.
+- **Volt removed**: Admin screens use `Livewire\Component` PHP classes under `Vormia\ATURankSEO\Livewire\...` plus Blade views; `livewire/livewire` `^4.0` is now a required dependency.
+- **Notifications**: `App\Traits\Vrm\Livewire\WithNotifications` is replaced by an in-package toast helper (`WithRankSeoToasts`).
+- **Seeder**: Run `php artisan db:seed --class=Vormia\ATURankSEO\Database\Seeders\ATURankSEOSeeder` (class lives in the package).
+- **Config keys**: Cache settings are nested: `atu-rank-seo.cache.ttl` and `atu-rank-seo.cache.prefix`. New env: `ATU_RANKSEO_ADMIN_ENABLED` (disables route registration when false).
+- **Uninstall**: No longer deletes copied stub files or strips `web.php`; it optionally removes env keys and runs `migrate:rollback` with `--path` pointed at the package migration directory when the package lives under the application base path.
+
+### Improvements
+
+- Aligns install/uninstall flow with the package-first pattern used by A2Commerce-style packages.
+
+---
+
 ## [v1.2.1] - 2025-01-XX
 
 ### Bug Fixes

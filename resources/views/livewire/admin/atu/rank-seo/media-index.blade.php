@@ -1,98 +1,3 @@
-<?php
-
-use Livewire\Volt\Component;
-use Livewire\WithPagination;
-use Livewire\Attributes\Computed;
-use Vormia\ATURankSEO\Models\RankSeoMedia;
-use App\Traits\Vrm\Livewire\WithNotifications;
-
-new class extends Component {
-    use WithPagination;
-    use WithNotifications;
-
-    public $search = '';
-    public $typeFilter = '';
-    public $activeFilter = '';
-
-    protected $queryString = [
-        'search' => ['except' => ''],
-        'typeFilter' => ['except' => ''],
-        'activeFilter' => ['except' => ''],
-    ];
-
-    public function updatedSearch()
-    {
-        $this->resetPage();
-    }
-
-    public function updatedTypeFilter()
-    {
-        $this->resetPage();
-    }
-
-    public function updatedActiveFilter()
-    {
-        $this->resetPage();
-    }
-
-    public function activate($id)
-    {
-        try {
-            $mediaSeo = RankSeoMedia::findOrFail($id);
-            $mediaSeo->update(['is_active' => true]);
-            $this->notifySuccess(__('Media SEO entry was activated successfully!'));
-        } catch (\Exception $e) {
-            $this->notifyError(__('Failed to activate media SEO entry: ' . $e->getMessage()));
-        }
-    }
-
-    public function deactivate($id)
-    {
-        try {
-            $mediaSeo = RankSeoMedia::findOrFail($id);
-            $mediaSeo->update(['is_active' => false]);
-            $this->notifySuccess(__('Media SEO entry was deactivated successfully!'));
-        } catch (\Exception $e) {
-            $this->notifyError(__('Failed to deactivate media SEO entry: ' . $e->getMessage()));
-        }
-    }
-
-    public function delete($id)
-    {
-        try {
-            $mediaSeo = RankSeoMedia::findOrFail($id);
-            $mediaSeo->delete();
-            $this->notifySuccess(__('Media SEO entry was deleted successfully!'));
-        } catch (\Exception $e) {
-            $this->notifyError(__('Failed to delete media SEO entry: ' . $e->getMessage()));
-        }
-    }
-
-    #[Computed]
-    public function mediaEntries()
-    {
-        $query = RankSeoMedia::query();
-
-        if ($this->search) {
-            $query->where(function ($q) {
-                $q->where('media_url', 'like', '%' . $this->search . '%')
-                  ->orWhere('title', 'like', '%' . $this->search . '%')
-                  ->orWhere('alt_text', 'like', '%' . $this->search . '%');
-            });
-        }
-
-        if ($this->typeFilter) {
-            $query->where('media_type', $this->typeFilter);
-        }
-
-        if ($this->activeFilter !== '') {
-            $query->where('is_active', $this->activeFilter === '1');
-        }
-
-        return $query->orderBy('updated_at', 'desc')->paginate(15);
-    }
-}; ?>
-
 <div>
     <x-admin-panel>
         <x-slot name="header">{{ __('Media SEO Manager') }}</x-slot>
@@ -107,7 +12,6 @@ new class extends Component {
             </a>
         </x-slot>
 
-        {{-- Search & Filter --}}
         <div class="my-4">
             <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg">
                 <div class="px-4 py-5 sm:p-6">
@@ -139,10 +43,8 @@ new class extends Component {
             </div>
         </div>
 
-        {{-- Display notifications --}}
         {!! $this->renderNotification() !!}
 
-        {{-- Table --}}
         <div class="overflow-hidden shadow-sm ring-1 ring-black/5 dark:ring-white/10 sm:rounded-lg mt-2">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-300 dark:divide-gray-600">
@@ -167,7 +69,7 @@ new class extends Component {
                                         <code class="text-xs text-gray-600 dark:text-gray-400">{{ Str::limit($entry->media_url, 40) }}</code>
                                         @if ($entry->media_type === 'image')
                                             <div class="mt-1">
-                                                <img src="{{ asset($entry->media_url) }}" alt="{{ $entry->alt_text }}" 
+                                                <img src="{{ asset($entry->media_url) }}" alt="{{ $entry->alt_text }}"
                                                     class="max-w-[50px] max-h-[50px] object-cover rounded-md border border-gray-300 dark:border-gray-600" />
                                             </div>
                                         @endif
@@ -193,13 +95,11 @@ new class extends Component {
                                     <td class="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">{{ $entry->updated_at->format('Y-m-d H:i') }}</td>
                                     <td class="relative py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-3">
                                         <div class="flex items-center justify-end gap-x-2">
-                                            {{-- Edit Button --}}
                                             <a href="{{ route('admin.atu.rank-seo.media.edit', $entry->id) }}"
                                                 class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                                                 Edit
                                             </a>
 
-                                            {{-- Activate Button --}}
                                             @if (!$entry->is_active)
                                                 <button type="button" wire:click="activate({{ $entry->id }})"
                                                     class="inline-flex items-center gap-x-1.5 rounded-md bg-green-600 px-2.5 py-1 text-sm font-semibold text-white shadow-xs hover:bg-green-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600">
@@ -211,7 +111,6 @@ new class extends Component {
                                                 </button>
                                             @endif
 
-                                            {{-- Deactivate Button --}}
                                             @if ($entry->is_active)
                                                 <button type="button" wire:click="deactivate({{ $entry->id }})"
                                                     class="inline-flex items-center gap-x-1.5 rounded-md bg-yellow-400 px-2.5 py-1 text-sm font-semibold text-white shadow-xs hover:bg-yellow-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-600">
@@ -223,7 +122,6 @@ new class extends Component {
                                                 </button>
                                             @endif
 
-                                            {{-- Delete Button --}}
                                             <button type="button" wire:click="$js.confirmDelete({{ $entry->id }})"
                                                 class="inline-flex items-center gap-x-1.5 rounded-md bg-red-600 px-2.5 py-1 text-xs font-semibold text-white shadow-xs hover:bg-red-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
                                                 Delete
@@ -245,7 +143,6 @@ new class extends Component {
             </div>
         </div>
 
-        {{-- Pagination --}}
         <div class="mt-8">
             @if ($this->mediaEntries->hasPages())
                 <div class="p-2">

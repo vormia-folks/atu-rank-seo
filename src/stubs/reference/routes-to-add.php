@@ -1,14 +1,31 @@
 <?php
 
-// ATU Rank SEO Routes
-// Add these routes to your routes/web.php file
-// Place them inside: Route::middleware(['auth'])->group(function () { ... });
-// Note: If you have configured your own starterkit, you may need to add: use Livewire\Volt\Volt;
+/**
+ * REFERENCE ONLY — not copied or loaded by the installer.
+ *
+ * By default, ATU Rank SEO registers admin Livewire routes from the service
+ * provider when `config('atu-rank-seo.enabled')` and `config('atu-rank-seo.admin.enabled')`
+ * are true (see `ATU_RANKSEO_ADMIN_ENABLED` in .env).
+ *
+ * Use this file only if you disabled package routes and want to register the
+ * same endpoints yourself (custom middleware stack, duplicate names, etc.).
+ *
+ * Livewire 4: full-page components are route targets (see Laravel routing docs
+ * and https://livewire.laravel.com/docs ).
+ */
 
-Route::group(['prefix' => 'admin/atu'], function () {
-    Volt::route('rank-seo', 'admin.atu.rank-seo.index')->name('admin.atu.rank-seo.index');
-    Volt::route('rank-seo/settings', 'admin.atu.rank-seo.settings')->name('admin.atu.rank-seo.settings');
-    Volt::route('rank-seo/edit/{id}', 'admin.atu.rank-seo.edit')->name('admin.atu.rank-seo.edit');
-    Volt::route('rank-seo/media', 'admin.atu.rank-seo.media-index')->name('admin.atu.rank-seo.media.index');
-    Volt::route('rank-seo/media/edit/{id}', 'admin.atu.rank-seo.media-edit')->name('admin.atu.rank-seo.media.edit');
-});
+use Illuminate\Support\Facades\Route;
+use Vormia\ATURankSEO\Livewire\Admin\Atu\RankSeo\Edit;
+use Vormia\ATURankSEO\Livewire\Admin\Atu\RankSeo\Index;
+use Vormia\ATURankSEO\Livewire\Admin\Atu\RankSeo\MediaEdit;
+use Vormia\ATURankSEO\Livewire\Admin\Atu\RankSeo\MediaIndex;
+use Vormia\ATURankSEO\Livewire\Admin\Atu\RankSeo\Settings;
+
+// Example: register manually (set ATU_RANKSEO_ADMIN_ENABLED=false first to avoid duplicates).
+// Route::middleware(['web', 'auth'])->prefix('admin/atu')->name('admin.atu.rank-seo.')->group(function () {
+//     Route::get('/rank-seo', Index::class)->name('index');
+//     Route::get('/rank-seo/settings', Settings::class)->name('settings');
+//     Route::get('/rank-seo/edit/{id}', Edit::class)->name('edit');
+//     Route::get('/rank-seo/media', MediaIndex::class)->name('media.index');
+//     Route::get('/rank-seo/media/edit/{id}', MediaEdit::class)->name('media.edit');
+// });

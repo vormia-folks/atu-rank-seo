@@ -11,15 +11,15 @@ class SeoCacheService
 
     public function __construct()
     {
-        $this->prefix = config('atu-rank-seo.cache_prefix', 'atu_rankseo');
+        $this->prefix = config('atu-rank-seo.cache.prefix', 'atu_rankseo');
     }
 
     /**
      * Cache SEO payload for a slug or media.
      */
-    public function put(string $cacheKey, array $seoPayload, int $ttl = null): void
+    public function put(string $cacheKey, array $seoPayload, ?int $ttl = null): void
     {
-        $ttl = $ttl ?? config('atu-rank-seo.cache_ttl', 3600);
+        $ttl = $ttl ?? config('atu-rank-seo.cache.ttl', 3600);
 
         try {
             Cache::put($cacheKey, $seoPayload, $ttl);

@@ -1,89 +1,3 @@
-<?php
-
-use Livewire\Volt\Component;
-use Livewire\Attributes\Validate;
-use Vormia\ATURankSEO\Models\RankSeoSettings;
-use App\Traits\Vrm\Livewire\WithNotifications;
-
-new class extends Component {
-    use WithNotifications;
-
-    public $isEnabled;
-    
-    #[Validate('nullable|string|max:255')]
-    public $globalTitle;
-    
-    #[Validate('nullable|string')]
-    public $globalDescription;
-    
-    #[Validate('nullable|string')]
-    public $globalKeywords;
-    
-    public $dynamicVariables = [];
-    public $newVariableKey = '';
-    public $newVariableValue = '';
-
-    public function mount()
-    {
-        $settings = RankSeoSettings::getInstance();
-        $this->isEnabled = $settings->is_enabled;
-        $this->globalTitle = $settings->global_title;
-        $this->globalDescription = $settings->global_description;
-        $this->globalKeywords = $settings->global_keywords;
-        $this->dynamicVariables = $settings->dynamic_variables ?? [];
-    }
-
-    public function save()
-    {
-        $this->validate([
-            'isEnabled' => 'boolean',
-            'globalTitle' => 'nullable|string|max:255',
-            'globalDescription' => 'nullable|string',
-            'globalKeywords' => 'nullable|string',
-        ]);
-
-        try {
-            $settings = RankSeoSettings::getInstance();
-            $settings->update([
-                'is_enabled' => $this->isEnabled,
-                'global_title' => $this->globalTitle,
-                'global_description' => $this->globalDescription,
-                'global_keywords' => $this->globalKeywords,
-                'dynamic_variables' => $this->dynamicVariables,
-            ]);
-
-            $this->notifySuccess(__('Settings saved successfully.'));
-        } catch (\Exception $e) {
-            $this->notifyError(__('Failed to save settings: ' . $e->getMessage()));
-        }
-    }
-
-    public function addVariable()
-    {
-        if ($this->newVariableKey && $this->newVariableValue) {
-            $this->dynamicVariables[$this->newVariableKey] = $this->newVariableValue;
-            $this->newVariableKey = '';
-            $this->newVariableValue = '';
-            $this->notifySuccess(__('Variable added successfully.'));
-        } else {
-            $this->notifyError(__('Please provide both variable name and value.'));
-        }
-    }
-
-    public function removeVariable($key)
-    {
-        if (isset($this->dynamicVariables[$key])) {
-            unset($this->dynamicVariables[$key]);
-            $this->notifySuccess(__('Variable removed successfully.'));
-        }
-    }
-
-    public function cancel()
-    {
-        $this->notifyInfo(__('Settings update cancelled.'));
-    }
-}; ?>
-
 <div>
     <x-admin-panel>
         <x-slot name="header">{{ __('Global SEO Settings') }}</x-slot>
@@ -97,14 +11,11 @@ new class extends Component {
             </a>
         </x-slot>
 
-        {{-- Form Container --}}
         <div class="overflow-hidden shadow-sm ring-1 ring-black/5 dark:ring-white/10 sm:rounded-lg px-4 py-5 mb-5 sm:p-6">
-            {{-- Display notifications --}}
             {!! $this->renderNotification() !!}
 
             <form wire:submit="save">
                 <div class="space-y-12">
-                    {{-- Master Settings Section --}}
                     <div class="grid grid-cols-1 gap-x-8 gap-y-10 pb-12 md:grid-cols-3">
                         <div>
                             <h2 class="text-base/7 font-semibold text-gray-900 dark:text-gray-100">Master Settings</h2>
@@ -125,7 +36,6 @@ new class extends Component {
                         </div>
                     </div>
 
-                    {{-- Global SEO Defaults Section --}}
                     <div class="grid grid-cols-1 gap-x-8 gap-y-10 pb-12 md:grid-cols-3">
                         <div>
                             <h2 class="text-base/7 font-semibold text-gray-900 dark:text-gray-100">Global SEO Defaults</h2>
@@ -167,7 +77,6 @@ new class extends Component {
                         </div>
                     </div>
 
-                    {{-- Dynamic Variables Section --}}
                     <div class="grid grid-cols-1 gap-x-8 gap-y-10 pb-12 md:grid-cols-3">
                         <div>
                             <h2 class="text-base/7 font-semibold text-gray-900 dark:text-gray-100">Dynamic Variables</h2>
@@ -199,7 +108,7 @@ new class extends Component {
                                                             </td>
                                                             <td class="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">{{ $value }}</td>
                                                             <td class="relative py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-3">
-                                                                <button type="button" wire:click="removeVariable('{{ $key }}')"
+                                                                <button type="button" wire:click="removeVariable({{ json_encode($key) }})"
                                                                     class="inline-flex items-center gap-x-1.5 rounded-md bg-red-600 px-2.5 py-1 text-xs font-semibold text-white shadow-xs hover:bg-red-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
                                                                     Remove
                                                                 </button>
@@ -237,7 +146,6 @@ new class extends Component {
                                 </div>
                             </div>
 
-                            {{-- Form Actions --}}
                             <div class="col-span-full">
                                 <div class="flex items-center justify-end gap-x-3 border-t border-gray-900/10 dark:border-gray-100/10 pt-4">
                                     <button type="button" wire:click="cancel"

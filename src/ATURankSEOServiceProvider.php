@@ -2,37 +2,40 @@
 
 namespace Vormia\ATURankSEO;
 
-use Vormia\ATURankSEO\ATURankSEO;
+use Vormia\ATURankSEO\Console\Commands\ATURankSEOHelpCommand;
 use Vormia\ATURankSEO\Console\Commands\ATURankSEOInstallCommand;
 use Vormia\ATURankSEO\Console\Commands\ATURankSEOUninstallCommand;
 use Vormia\ATURankSEO\Console\Commands\ATURankSEOUpdateCommand;
-use Vormia\ATURankSEO\Console\Commands\ATURankSEOHelpCommand;
-use Vormia\ATURankSEO\Support\Installer;
-use Vormia\ATURankSEO\Services\SeoResolverService;
-use Vormia\ATURankSEO\Services\SeoSnapshotService;
+use Vormia\ATURankSEO\Livewire\Admin\Atu\RankSeo\Edit;
+use Vormia\ATURankSEO\Livewire\Admin\Atu\RankSeo\Index;
+use Vormia\ATURankSEO\Livewire\Admin\Atu\RankSeo\MediaEdit;
+use Vormia\ATURankSEO\Livewire\Admin\Atu\RankSeo\MediaIndex;
+use Vormia\ATURankSEO\Livewire\Admin\Atu\RankSeo\Settings;
 use Vormia\ATURankSEO\Services\MediaIndexerService;
 use Vormia\ATURankSEO\Services\SeoCacheService;
+use Vormia\ATURankSEO\Services\SeoResolverService;
+use Vormia\ATURankSEO\Services\SeoSnapshotService;
+use Vormia\ATURankSEO\Support\Installer;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
 class ATURankSEOServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Register version instance
         $this->app->instance('aturankseo.version', ATURankSEO::VERSION);
 
-        // Register Installer as singleton
+        $this->mergeConfigFrom(__DIR__.'/../config/atu-rank-seo.php', 'atu-rank-seo');
+
         $this->app->singleton(Installer::class, function (Application $app) {
             return new Installer(
-                new Filesystem(),
-                ATURankSEO::stubsPath(),
+                new Filesystem,
                 $app->basePath()
             );
         });
 
-        // Register services as singletons
         $this->app->singleton(SeoResolverService::class);
         $this->app->singleton(SeoSnapshotService::class);
         $this->app->singleton(MediaIndexerService::class);
@@ -41,6 +44,15 @@ class ATURankSEOServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->loadMigrationsFrom(ATURankSEO::basePath('database/migrations'));
+        $this->loadViewsFrom(ATURankSEO::basePath('resources/views'), 'aturankseo');
+
+        $this->publishes([
+            ATURankSEO::basePath('config/atu-rank-seo.php') => config_path('atu-rank-seo.php'),
+        ], 'aturankseo-config');
+
+        $this->registerAdminRoutes();
+
         if ($this->app->runningInConsole()) {
             $this->commands([
                 ATURankSEOInstallCommand::class,
@@ -49,5 +61,26 @@ class ATURankSEOServiceProvider extends ServiceProvider
                 ATURankSEOHelpCommand::class,
             ]);
         }
+    }
+
+    protected function registerAdminRoutes(): void
+    {
+        if (! config('atu-rank-seo.enabled', true) || ! config('atu-rank-seo.admin.enabled', true)) {
+            return;
+        }
+
+        $middleware = config('atu-rank-seo.admin.middleware', ['web', 'auth']);
+        $prefix = trim((string) config('atu-rank-seo.admin.prefix', 'admin/atu'), '/');
+
+        Route::middleware($middleware)
+            ->prefix($prefix)
+            ->name('admin.atu.rank-seo.')
+            ->group(function () {
+                Route::get('/rank-seo', Index::class)->name('index');
+                Route::get('/rank-seo/settings', Settings::class)->name('settings');
+                Route::get('/rank-seo/edit/{id}', Edit::class)->name('edit');
+                Route::get('/rank-seo/media', MediaIndex::class)->name('media.index');
+                Route::get('/rank-seo/media/edit/{id}', MediaEdit::class)->name('media.edit');
+            });
     }
 }

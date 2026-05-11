@@ -1,21 +1,17 @@
 <?php
 
-namespace Database\Seeders;
+namespace Vormia\ATURankSEO\Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Vormia\ATURankSEO\Models\RankSeoSettings;
 
 class ATURankSEOSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Create default settings if they don't exist
         $settings = RankSeoSettings::first();
 
-        if (!$settings) {
+        if (! $settings) {
             RankSeoSettings::create([
                 'is_enabled' => true,
                 'global_title' => null,
@@ -27,9 +23,9 @@ class ATURankSEOSeeder extends Seeder
                 ],
             ]);
 
-            $this->command->info('✅ Default SEO settings created.');
+            $this->command?->info('Default SEO settings created.');
         } else {
-            $this->command->info('ℹ️  SEO settings already exist.');
+            $this->command?->info('SEO settings already exist.');
         }
     }
 }

@@ -7,11 +7,9 @@
     "require": {
         "php": "^8.2",
         "laravel/framework": "^12.0|^13.0",
+        "livewire/livewire": "^4.0",
         "vormiaphp/vormia": "^5.4",
         "a2-atu/a2commerce": "^0.2.0"
-    },
-    "suggest": {
-        "livewire/livewire": "Required for admin panel UI components"
     },
     "require-dev": {
         "phpunit/phpunit": "^11.2"
