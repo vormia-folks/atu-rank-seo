@@ -174,7 +174,7 @@ class ATURankSEOInstallCommand extends Command
             $this->line('   3. Run migrations: php artisan migrate');
             $this->line('   4. Run seeders: php artisan db:seed --class='.ATURankSEOSeeder::class);
         } else {
-            $this->line('   3. Add sidebar links if needed (see package src/stubs/reference/sidebar-menu-to-add.blade.php).');
+            $this->line('   3. Add sidebar links if needed (see package src/stubs/reference/sidebar-flux-menu-to-add.blade.php or sidebar-menu-to-add.blade.php).');
         }
 
         $this->newLine();

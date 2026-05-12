@@ -1,5 +1,17 @@
 # Release Notes
 
+## [v1.3.1] - 2026-05-12
+
+### Documentation and stubs
+
+- **README**: Aligned with Livewire 4 package-first routing (no Volt), correct install/uninstall behavior, env keys (`ATU_RANKSEO_ADMIN_ENABLED`), vendor paths (`vormia-folks/atu-rank-seo`), and requirements from `composer.json`. Added stub-folder overview and admin component/view table.
+- **Stubs**: Added `src/stubs/reference/sidebar-flux-menu-to-add.blade.php`; clarified headers on reference sidebar snippets. Added `src/stubs/resources/views/livewire/admin/atu/rank-seo/` as Multicurrency-style **mirror copies** of shipped Blade templates (with stub headers).
+- **Examples**: Replaced legacy Volt-style `example-package/rank-seo/*.blade.php` files with the same **view-only** templates as `resources/views/livewire/admin/atu/rank-seo/` (Livewire logic remains in `Vormia\ATURankSEO\Livewire\...` classes).
+- **Docs**: Merged `docs/atu-rank-seo-ui.md` into a single [docs/atu-rank-seo.md](docs/atu-rank-seo.md) (TOC, service APIs, admin UI, Livewire 4, stubs, Vormia `WithNotifications` vs `WithRankSeoToasts`, events). Removed `docs/atu-rank-seo-ui.md`.
+- **Installer message**: Completion step now mentions Flux and non-Flux sidebar stub files.
+
+---
+
 ## [v1.3.0] - 2026-05-11
 
 ### Breaking changes

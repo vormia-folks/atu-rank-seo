@@ -28,31 +28,38 @@ php artisan aturankseo:install
 
 This will:
 
-- Copy configuration files
-- Add environment variables
-- Add routes (commented out by default)
-- Run migrations (with confirmation)
-- Run seeders (with confirmation)
+- Optionally add environment variables to `.env` and `.env.example` (unless `--skip-env`)
+- Optionally run `php artisan migrate` (with confirmation)
+- Optionally run the package seeder (with confirmation)
+
+The installer does **not** copy migrations, views, or routes into your app. Migrations load from the package; admin UI views load via `loadViewsFrom` using the `aturankseo` namespace. Optional config publish:
+
+```bash
+php artisan vendor:publish --tag=aturankseo-config
+```
 
 ## Configuration
 
 ### Environment Variables
 
-Add these to your `.env` file:
+Typical keys (see `config/atu-rank-seo.php` after publishing):
 
 ```env
 ATU_RANKSEO_ENABLED=true
 ATU_RANKSEO_CACHE_TTL=3600
+ATU_RANKSEO_ADMIN_ENABLED=true
 ```
+
+When `ATU_RANKSEO_ADMIN_ENABLED` is `false`, the package does not register admin routes (useful if you register the same URLs yourself).
 
 ### Config File
 
-The configuration file is published to `config/atu-rank-seo.php`. You can customize:
+Publish to `config/atu-rank-seo.php` with the tag above. You can customize:
 
-- Cache TTL
+- Global `enabled` and admin `enabled`, `middleware`, `prefix`
+- Cache TTL and prefix
 - Default placeholder variables
-- Media directory path
-- Supported media types
+- Media directory path and supported media types
 
 ## Usage
 
@@ -109,163 +116,108 @@ $mediaIndexer->registerMedia('media/images/product.jpg', [
 ]);
 ```
 
-## Admin Panel
+## Admin Panel (Livewire 4)
 
-The package includes Livewire Volt components for managing SEO:
+The admin UI uses **Livewire 4 full-page components** (PHP classes extending `Livewire\Component`), not Volt. Components live under `Vormia\ATURankSEO\Livewire\Admin\Atu\RankSeo\`:
 
-- **SEO Entries List**: View and manage all SEO entries
-- **Global Settings**: Configure global SEO defaults and dynamic variables
-- **Edit SEO Entry**: Edit page-specific SEO
-- **Media SEO Manager**: Manage media SEO entries
-- **Edit Media SEO**: Edit media-specific SEO
+| Screen | Class | Blade view (namespace `aturankseo::`) |
+| --- | --- | --- |
+| SEO entries list | `Index` | `aturankseo::livewire.admin.atu.rank-seo.index` |
+| Global settings | `Settings` | `aturankseo::livewire.admin.atu.rank-seo.settings` |
+| Edit page SEO | `Edit` | `aturankseo::livewire.admin.atu.rank-seo.edit` |
+| Media list | `MediaIndex` | `aturankseo::livewire.admin.atu.rank-seo.media-index` |
+| Edit media SEO | `MediaEdit` | `aturankseo::livewire.admin.atu.rank-seo.media-edit` |
 
-### Routes
+Toasts use the in-package concern `Vormia\ATURankSEO\Livewire\Concerns\WithRankSeoToasts` (not application-level notification traits).
 
-Routes are added to `routes/web.php` (commented out by default). Uncomment and customize as needed:
+### Routes (default)
 
-```php
-use Livewire\Volt\Volt;
+When `atu-rank-seo.enabled` and `atu-rank-seo.admin.enabled` are true, `ATURankSEOServiceProvider` registers routes (default prefix `admin/atu`, names `admin.atu.rank-seo.*`). You do **not** need to add a block to `routes/web.php` for the standard setup.
 
-Route::group(['prefix' => 'admin/atu'], function () {
-    Volt::route('rank-seo', 'admin.atu.rank-seo.index')->name('admin.atu.rank-seo.index');
-    // ... other routes
-});
-```
+Some apps use `Route::livewire($uri, $component)` (string component name) instead of `Route::get($uri, SomeClass::class)`; both are valid in Livewire 4. This package uses `Route::get(..., Component::class)` in the provider and in the manual stub below for consistency.
 
-### Manual Route Setup
+### Manual routes (optional)
 
-If automatic route injection fails, manually add the following routes to `routes/web.php` inside the `Route::middleware(['auth'])->group(function () { ... })` block:
+If you disable package route registration (`ATU_RANKSEO_ADMIN_ENABLED=false` or `admin.enabled` false), register the same endpoints yourself. Copy from the package stub (adjust middleware/prefix to match your app):
 
-```php
-Route::prefix('admin/atu/rank-seo')->name('admin.atu.rank-seo.')->group(function () {
-    Volt::route('index', 'admin.atu.rank-seo.index')->name('index');
-    Volt::route('settings', 'admin.atu.rank-seo.settings')->name('settings');
-    Volt::route('edit/{id}', 'admin.atu.rank-seo.edit')->name('edit');
-    Volt::route('media', 'admin.atu.rank-seo.media-index')->name('media.index');
-    Volt::route('media/edit/{id}', 'admin.atu.rank-seo.media-edit')->name('media.edit');
-});
-```
+`vendor/vormia-folks/atu-rank-seo/src/stubs/reference/routes-to-add.php`
 
-**Note:** If you have configured your own starterkit, you may need to add `use Livewire\Volt\Volt;` at the top of your routes file.
+The stub uses `Route::get(..., Component::class)` with the five component classes listed above.
 
-### Manual Sidebar Menu Setup
+### Stub folders (reference vs copy)
 
-If automatic sidebar menu injection fails, manually add the following menu items to your admin sidebar (usually in `resources/views/components/layouts/app/sidebar.blade.php` or similar):
+These paths are under the package root (or `vendor/vormia-folks/atu-rank-seo/` when installed):
 
-```blade
-@if (auth()->user()?->isAdminOrSuperAdmin())
-    <hr />
+- **`src/stubs/reference/`** — Snippets only (routes, sidebar). The installer does **not** copy them; paste into your app when you need custom wiring.
+- **`src/stubs/resources/views/livewire/admin/atu/rank-seo/`** — Mirror copies of the package Blade templates (same layout as other ATU packages such as Multicurrency). Use them as a starting point if you publish or merge views into your application for customization. Keep them in sync with `resources/views/livewire/admin/atu/rank-seo/` in this repository when contributing upstream.
 
-    {{-- SEO Entries Menu Item --}}
-    <flux:navlist.item icon="magnifying-glass" :href="route('admin.atu.rank-seo.index')"
-        :current="request()->routeIs('admin.atu.rank-seo.index') || request()->routeIs('admin.atu.rank-seo.edit')" wire:navigate>
-        {{ __('SEO Entries') }}
-    </flux:navlist.item>
+### Sidebar (Flux)
 
-    {{-- Media SEO Menu Item --}}
-    <flux:navlist.item icon="photo" :href="route('admin.atu.rank-seo.media.index')"
-        :current="request()->routeIs('admin.atu.rank-seo.media.*')" wire:navigate>
-        {{ __('Media SEO') }}
-    </flux:navlist.item>
+For Flux-based sidebars, copy from:
 
-    {{-- Global Settings Menu Item --}}
-    <flux:navlist.item icon="cog-6-tooth" :href="route('admin.atu.rank-seo.settings')"
-        :current="request()->routeIs('admin.atu.rank-seo.settings')" wire:navigate>
-        {{ __('SEO Settings') }}
-    </flux:navlist.item>
-@endif
-```
+`vendor/vormia-folks/atu-rank-seo/src/stubs/reference/sidebar-flux-menu-to-add.blade.php`
 
-**Reference Files:**
-
-- Routes: `vendor/vormiaphp/atu-rank-seo/src/stubs/reference/routes-to-add.php`
-- Sidebar Menu: `vendor/vormiaphp/atu-rank-seo/src/stubs/reference/sidebar-menu-to-add.blade.php`
+A generic HTML example lives in `src/stubs/reference/sidebar-menu-to-add.blade.php`.
 
 ## Commands
 
-- `php artisan aturankseo:install` - Install the package
-- `php artisan aturankseo:update` - Update package files
-- `php artisan aturankseo:uninstall` - Uninstall the package
-- `php artisan aturankseo:help` - Display help information
+- `php artisan aturankseo:install` — Apply setup (env, optional migrate/seed)
+- `php artisan aturankseo:update` — Re-apply env keys
+- `php artisan aturankseo:uninstall` — Optional env removal, optional migration rollback, cache clears
+- `php artisan aturankseo:help` — Show env keys and route summary
 
 ## Uninstallation
 
-To uninstall ATU Rank SEO from your application:
-
 ```bash
 php artisan aturankseo:uninstall
 ```
 
-### Uninstallation Process
+### What the uninstall command does
 
-The uninstall command will:
+1. Optionally removes ATU Rank SEO keys from `.env` / `.env.example` (with confirmation, unless `--force` / `--keep-env`)
+2. Optionally rolls back package migrations (with confirmation; destructive to package tables)
+3. Clears config, route, view, and application caches
 
-1. **Remove Package Files**: Delete all copied files and stubs from your application
-2. **Remove Routes**: Remove SEO routes from `routes/web.php`
-3. **Clean Environment Files**: Optionally remove environment variables from `.env` and `.env.example` (with confirmation)
-4. **Clear Application Caches**: Automatically refresh/clear all Laravel caches:
-   - Configuration cache (`config:clear`)
-   - Route cache (`route:clear`)
-   - View cache (`view:clear`)
-   - Application cache (`cache:clear`)
+It does **not** edit `routes/web.php` (routes are owned by the package while it remains installed) and does **not** delete optional files you copied from stubs.
 
-### Uninstallation Options
+### Options
 
-- `--keep-env`: Preserve environment variables in `.env` files
+- `--keep-env`: Preserve environment variables
 - `--force`: Skip confirmation prompts
 
-**Examples:**
+### After uninstall
 
-```bash
-# Standard uninstall with prompts
-php artisan aturankseo:uninstall
-
-# Uninstall but keep environment variables
-php artisan aturankseo:uninstall --keep-env
-
-# Force uninstall without prompts
-php artisan aturankseo:uninstall --force
-```
-
-### After Uninstallation
-
-After running the uninstall command, you'll need to:
-
-1. Remove the package from `composer.json`:
+1. Remove the Composer dependency if you no longer need the package:
 
    ```bash
    composer remove vormia-folks/atu-rank-seo
    ```
 
-2. Review your application for any remaining ATU Rank SEO references in your code
+2. Remove any custom routes or sidebar links you added manually.
 
-3. If you want to reinstall the package later, simply run:
-   ```bash
-   composer require vormia-folks/atu-rank-seo
-   php artisan aturankseo:install
-   ```
+3. To reinstall: `composer require vormia-folks/atu-rank-seo` and `php artisan aturankseo:install`.
 
 ## Database Schema
 
 ### Tables
 
-- `atu_rankseo_meta` - Page-level SEO metadata
-- `atu_rankseo_media` - Media SEO metadata
-- `atu_rankseo_settings` - Global SEO settings
+- `atu_rankseo_meta` — Page-level SEO metadata
+- `atu_rankseo_media` — Media SEO metadata
+- `atu_rankseo_settings` — Global SEO settings
 
 ## Placeholder Resolution
 
 SEO fields support placeholders that are resolved on save:
 
-- `{make}` - Vehicle make
-- `{model}` - Vehicle model
-- `{year}` - Year
-- `{site_name}` - Site name (from config or settings)
-- `{current_year}` - Current year
-- `{current_month}` - Current month name
-- `{current_date}` - Current date
+- `{make}` — Vehicle make
+- `{model}` — Vehicle model
+- `{year}` — Year
+- `{site_name}` — Site name (from config or settings)
+- `{current_year}` — Current year
+- `{current_month}` — Current month name
+- `{current_date}` — Current date
 
-Placeholders are resolved using:
+Resolution order:
 
 1. Data provided when generating the snapshot
 2. Global SEO variables from settings
@@ -278,15 +230,15 @@ SEO data is cached for performance. Cache keys follow the pattern:
 - Page SEO: `atu_rankseo:slug:{slug_registry_id}:{type}`
 - Media SEO: `atu_rankseo:media:{md5(media_url)}`
 
-Cache is automatically invalidated when SEO entries are updated, deleted, or activated/deactivated.
+Cache is invalidated when SEO entries are updated, deleted, or activated or deactivated.
 
 ## Requirements
 
 - PHP ^8.2
-- Laravel ^12.0
-- vormiaphp/vormia ^4.4
-- a2-atu/a2commerce ^0.1.6
-- livewire/livewire (for admin panel)
+- Laravel ^12.0 or ^13.0
+- `livewire/livewire` ^4.0
+- `vormiaphp/vormia` ^5.4
+- `a2-atu/a2commerce` ^0.2.0
 
 ## License
 
@@ -294,4 +246,4 @@ MIT
 
 ## Support
 
-For issues and questions, please refer to the package documentation or create an issue in the repository.
+Developer guide: [docs/atu-rank-seo.md](docs/atu-rank-seo.md). For issues and questions, use the package repository.

@@ -1,8 +1,11 @@
 {{--
-    REFERENCE ONLY — copy into your admin sidebar / navigation as needed.
+    REFERENCE ONLY — not copied or loaded by the installer.
+    Plain HTML / Bootstrap-style sidebar examples (no Flux components).
+
+    For Livewire Flux sidebars, use sidebar-flux-menu-to-add.blade.php in this folder.
 
     Route names match the package defaults (admin.atu.rank-seo.*).
-    Ensure Flux or your layout includes Livewire styles/scripts.
+    Ensure your layout includes Livewire styles/scripts.
 --}}
 
 {{-- Single link example --}}
