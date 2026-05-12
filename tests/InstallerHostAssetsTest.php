@@ -138,6 +138,83 @@ class InstallerHostAssetsTest extends TestCase
         }
     }
 
+    public function test_remove_rank_seo_routes_from_web_php_strips_reference_stub_block(): void
+    {
+        $base = $this->tempAppPath();
+        $fs = new Filesystem;
+
+        try {
+            $fs->ensureDirectoryExists($base.'/routes');
+            $stub = <<<'PHP'
+<?php
+
+use Illuminate\Support\Facades\Route;
+
+// >>> ATU Rank SEO Web Routes START
+Route::prefix('admin/atu')->name('admin.atu.rank-seo.')->group(function () {
+    Route::livewire('rank-seo', 'rank-seo.index')->name('index');
+});
+// <<< ATU Rank SEO Web Routes END
+
+PHP;
+            $fs->put($base.'/routes/web.php', $stub);
+            $installer = new Installer($fs, $base);
+
+            $removed = $installer->removeRankSeoRoutesFromWebPhp();
+            $this->assertTrue($removed['removed']);
+
+            $content = $fs->get($base.'/routes/web.php');
+            $this->assertStringNotContainsString(Installer::WEB_ROUTES_REFERENCE_MARKER_START, $content);
+            $this->assertStringNotContainsString(Installer::WEB_ROUTES_REFERENCE_MARKER_END, $content);
+        } finally {
+            $fs->deleteDirectory($base);
+        }
+    }
+
+    public function test_append_rank_seo_routes_skips_when_reference_stub_already_present(): void
+    {
+        $base = $this->tempAppPath();
+        $fs = new Filesystem;
+
+        try {
+            $fs->ensureDirectoryExists($base.'/routes');
+            $stub = "<?php\n\n".Installer::WEB_ROUTES_REFERENCE_MARKER_START."\n// ...\n".Installer::WEB_ROUTES_REFERENCE_MARKER_END."\n";
+            $fs->put($base.'/routes/web.php', $stub);
+            $installer = new Installer($fs, $base);
+
+            $result = $installer->appendRankSeoRoutesToWebPhp(['web', 'auth'], 'admin/atu');
+            $this->assertFalse($result['appended']);
+            $this->assertTrue($result['skipped']);
+        } finally {
+            $fs->deleteDirectory($base);
+        }
+    }
+
+    public function test_remove_rank_seo_routes_from_web_php_removes_install_and_reference_blocks(): void
+    {
+        $base = $this->tempAppPath();
+        $fs = new Filesystem;
+
+        try {
+            $fs->ensureDirectoryExists($base.'/routes');
+            $fs->put($base.'/routes/web.php', "<?php\n\n");
+            $installer = new Installer($fs, $base);
+            $installer->appendRankSeoRoutesToWebPhp(['web', 'auth'], 'admin/atu');
+            $content = $fs->get($base.'/routes/web.php');
+            $extra = "\n".Installer::WEB_ROUTES_REFERENCE_MARKER_START."\nRoute::get('x');\n".Installer::WEB_ROUTES_REFERENCE_MARKER_END."\n";
+            $fs->put($base.'/routes/web.php', $content.$extra);
+
+            $removed = $installer->removeRankSeoRoutesFromWebPhp();
+            $this->assertTrue($removed['removed']);
+
+            $out = $fs->get($base.'/routes/web.php');
+            $this->assertStringNotContainsString(Installer::WEB_ROUTES_MARKER_START, $out);
+            $this->assertStringNotContainsString(Installer::WEB_ROUTES_REFERENCE_MARKER_START, $out);
+        } finally {
+            $fs->deleteDirectory($base);
+        }
+    }
+
     public function test_remove_rank_seo_routes_from_web_php_noop_without_markers(): void
     {
         $base = $this->tempAppPath();

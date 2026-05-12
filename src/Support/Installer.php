@@ -13,6 +13,11 @@ class Installer
 
     public const WEB_ROUTES_MARKER_END = '// <<< ATU Rank SEO end';
 
+    /** @see src/stubs/reference/routes-to-add.php (manual paste) */
+    public const WEB_ROUTES_REFERENCE_MARKER_START = '// >>> ATU Rank SEO Web Routes START';
+
+    public const WEB_ROUTES_REFERENCE_MARKER_END = '// <<< ATU Rank SEO Web Routes END';
+
     private const ENV_KEYS = [
         'ATU_RANKSEO_ENABLED' => 'true',
         'ATU_RANKSEO_CACHE_TTL' => '3600',
@@ -287,7 +292,8 @@ class Installer
 
         $content = $this->files->get($webPhp);
 
-        if (str_contains($content, self::WEB_ROUTES_MARKER_START)) {
+        if (str_contains($content, self::WEB_ROUTES_MARKER_START)
+            || str_contains($content, self::WEB_ROUTES_REFERENCE_MARKER_START)) {
             return ['appended' => false, 'skipped' => true, 'reason' => 'ATU Rank SEO route block already present'];
         }
 
@@ -324,7 +330,8 @@ PHP;
     }
 
     /**
-     * Remove the marked ATU Rank SEO route block from the host routes/web.php (same markers as install).
+     * Remove marked ATU Rank SEO route block(s) from the host routes/web.php.
+     * Recognizes install markers (WEB_ROUTES_MARKER_*) and reference stub markers (WEB_ROUTES_REFERENCE_MARKER_*).
      *
      * @return array{removed: bool, reason?: string}
      */
@@ -338,26 +345,80 @@ PHP;
 
         $content = $this->files->get($webPhp);
 
-        if (! str_contains($content, self::WEB_ROUTES_MARKER_START)) {
+        $markerPairs = [
+            [self::WEB_ROUTES_MARKER_START, self::WEB_ROUTES_MARKER_END],
+            [self::WEB_ROUTES_REFERENCE_MARKER_START, self::WEB_ROUTES_REFERENCE_MARKER_END],
+        ];
+
+        $anyKnownStart = false;
+        foreach ($markerPairs as [$startMarker]) {
+            if (str_contains($content, $startMarker)) {
+                $anyKnownStart = true;
+
+                break;
+            }
+        }
+
+        if (! $anyKnownStart) {
             return ['removed' => false, 'reason' => 'ATU Rank SEO route start marker not found'];
         }
 
-        if (! str_contains($content, self::WEB_ROUTES_MARKER_END)) {
-            return ['removed' => false, 'reason' => 'ATU Rank SEO end marker missing (web.php not changed)'];
+        $removedSomething = false;
+
+        while (true) {
+            $lines = preg_split('/\r\n|\r|\n/', $content);
+            $bounds = null;
+
+            foreach ($markerPairs as [$startMarker, $endMarker]) {
+                if (! str_contains($content, $startMarker) || ! str_contains($content, $endMarker)) {
+                    continue;
+                }
+
+                $bounds = $this->findRankSeoRouteBlockBounds($lines, $startMarker, $endMarker);
+                if ($bounds !== null) {
+                    break;
+                }
+            }
+
+            if ($bounds === null) {
+                break;
+            }
+
+            [$startIdx, $endIdx] = $bounds;
+            $merged = array_merge(
+                array_slice($lines, 0, $startIdx),
+                array_slice($lines, $endIdx + 1)
+            );
+            $content = preg_replace("/[\r\n]{3,}/", "\n\n", implode(PHP_EOL, $merged));
+            $removedSomething = true;
         }
 
-        $lines = preg_split('/\r\n|\r|\n/', $content);
+        if (! $removedSomething) {
+            return ['removed' => false, 'reason' => 'ATU Rank SEO route markers present but block boundaries could not be resolved (web.php not changed)'];
+        }
+
+        $this->files->put($webPhp, rtrim((string) $content).PHP_EOL);
+
+        return ['removed' => true];
+    }
+
+    /**
+     * @param  array<int, string>  $lines
+     * @return array{0: int, 1: int}|null
+     */
+    private function findRankSeoRouteBlockBounds(array $lines, string $startMarker, string $endMarker): ?array
+    {
         $startIdx = null;
         $endIdx = null;
 
         foreach ($lines as $i => $line) {
-            if ($startIdx === null && str_starts_with(ltrim((string) $line), self::WEB_ROUTES_MARKER_START)) {
+            if ($startIdx === null && str_starts_with(ltrim((string) $line), $startMarker)) {
                 $startIdx = $i;
 
                 continue;
             }
 
-            if ($startIdx !== null && $endIdx === null && str_starts_with(trim((string) $line), self::WEB_ROUTES_MARKER_END)) {
+            if ($startIdx !== null && $endIdx === null && str_starts_with(trim((string) $line), $endMarker)) {
                 $endIdx = $i;
 
                 break;
@@ -365,18 +426,10 @@ PHP;
         }
 
         if ($startIdx === null || $endIdx === null || $endIdx < $startIdx) {
-            return ['removed' => false, 'reason' => 'Could not locate ATU Rank SEO route block boundaries'];
+            return null;
         }
 
-        $merged = array_merge(
-            array_slice($lines, 0, $startIdx),
-            array_slice($lines, $endIdx + 1)
-        );
-        $out = preg_replace("/[\r\n]{3,}/", "\n\n", implode(PHP_EOL, $merged));
-
-        $this->files->put($webPhp, rtrim((string) $out).PHP_EOL);
-
-        return ['removed' => true];
+        return [$startIdx, $endIdx];
     }
 
     /**

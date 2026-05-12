@@ -173,7 +173,7 @@ php artisan aturankseo:uninstall
 
 ### What the uninstall command does
 
-1. Optionally removes the ATU Rank SEO block from `routes/web.php` (markers `// >>> ATU Rank SEO start` … `// <<< ATU Rank SEO end`) and deletes copied Livewire blades under `resources/views/livewire/admin/atu/rank-seo/` (with confirmation, unless `--force`; skipped with `--keep-host-files` or if you decline the prompt). When the route block is removed, `ATU_RANKSEO_ADMIN_ENABLED` is set to `true` in `.env` / `.env.example` (if those files exist) so the package can register admin routes again—**before** optional full env key removal, so a combined “remove everything” run does not leave that key behind.
+1. Optionally removes the ATU Rank SEO block from `routes/web.php` (install markers `// >>> ATU Rank SEO start` … `// <<< ATU Rank SEO end`, or reference markers `// >>> ATU Rank SEO Web Routes START` … `// <<< ATU Rank SEO Web Routes END` from `src/stubs/reference/routes-to-add.php`) and deletes copied Livewire blades under `resources/views/livewire/admin/atu/rank-seo/` (with confirmation, unless `--force`; skipped with `--keep-host-files` or if you decline the prompt). When the route block is removed, `ATU_RANKSEO_ADMIN_ENABLED` is set to `true` in `.env` / `.env.example` (if those files exist) so the package can register admin routes again—**before** optional full env key removal, so a combined “remove everything” run does not leave that key behind.
 2. Optionally removes ATU Rank SEO keys from `.env` / `.env.example` (with confirmation, unless `--force` / `--keep-env`)
 3. Optionally rolls back package migrations (with confirmation; destructive to package tables)
 4. Clears config, route, view, and application caches
