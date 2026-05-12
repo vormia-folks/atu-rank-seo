@@ -1,7 +1,9 @@
 <?php
 
 /**
- * REFERENCE ONLY — not copied or loaded by the installer.
+ * REFERENCE ONLY — not executed by the package. `php artisan aturankseo:install`
+ * generates an equivalent block in your app's routes/web.php (see markers
+ * `// >>> ATU Rank SEO start` / `// <<< ATU Rank SEO end` in Installer).
  *
  * By default, ATU Rank SEO registers admin Livewire routes from the service
  * provider when `config('atu-rank-seo.enabled')` and `config('atu-rank-seo.admin.enabled')`

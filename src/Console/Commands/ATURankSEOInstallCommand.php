@@ -10,9 +10,12 @@ use Illuminate\Support\Facades\Artisan;
 
 class ATURankSEOInstallCommand extends Command
 {
-    protected $signature = 'aturankseo:install {--skip-env : Do not modify .env files}';
+    protected $signature = 'aturankseo:install
+                            {--skip-env : Do not modify .env files}
+                            {--skip-host-copy : Do not copy views or append routes/web.php (package registers routes)}
+                            {--force : Overwrite existing copied Blade views in the host app}';
 
-    protected $description = 'Apply ATU Rank SEO setup: optional .env keys, then optional migrate and seed';
+    protected $description = 'Apply ATU Rank SEO setup: .env keys, copy admin views + routes to the host (unless skipped), optional migrate and seed';
 
     public function handle(Installer $installer): int
     {
@@ -32,21 +35,78 @@ class ATURankSEOInstallCommand extends Command
             $this->line('   ⏭️  Environment keys skipped (--skip-env flag used).');
         }
 
+        $hostAssets = null;
+        if (! $this->option('skip-host-copy')) {
+            $this->step('Copying admin views and appending routes to routes/web.php...');
+            $middleware = config('atu-rank-seo.admin.middleware', ['web', 'auth']);
+            $prefix = (string) config('atu-rank-seo.admin.prefix', 'admin/atu');
+            $hostAssets = $installer->installHostAdminAssets(
+                ATURankSEO::basePath(),
+                is_array($middleware) ? $middleware : ['web', 'auth'],
+                $prefix,
+                (bool) $this->option('force')
+            );
+            $this->displayHostAssetResults($hostAssets);
+        } else {
+            $this->line('   ⏭️  Host view/route copy skipped (--skip-host-copy). Package registers admin routes; views load from the package.');
+        }
+
         $migrationsRun = $this->handleMigrations();
 
         if ($migrationsRun) {
             $this->handleSeeders();
         }
 
-        $this->displayCompletionMessage($touchEnv, $migrationsRun);
+        $this->displayCompletionMessage($touchEnv, $migrationsRun, $this->option('skip-host-copy'));
 
         return self::SUCCESS;
+    }
+
+    /**
+     * @param  array{
+     *     views: array{copied: array<int, string>, skipped: array<int, string>, overwritten: array<int, string>},
+     *     routes: array{appended: bool, skipped: bool, reason?: string},
+     *     env_admin_disabled: array<string, bool>
+     * }  $hostAssets
+     */
+    private function displayHostAssetResults(array $hostAssets): void
+    {
+        $views = $hostAssets['views'];
+        foreach ($views['copied'] as $file) {
+            $this->info('   ✅ Copied view: '.$file);
+        }
+        foreach ($views['overwritten'] as $file) {
+            $this->info('   ✅ Overwrote view: '.$file);
+        }
+        foreach ($views['skipped'] as $file) {
+            $this->line('   ⏭️  Skipped existing view (use --force to overwrite): '.$file);
+        }
+
+        $routes = $hostAssets['routes'];
+        if (($routes['appended'] ?? false) === true) {
+            $this->info('   ✅ Appended ATU Rank SEO Livewire routes to routes/web.php');
+        } elseif (($routes['skipped'] ?? false) === true) {
+            $this->line('   ℹ️  routes/web.php already contains the ATU Rank SEO block (skipped).');
+        } else {
+            $this->warn('   ⚠️  routes/web.php: '.($routes['reason'] ?? 'routes not appended'));
+        }
+
+        foreach ($hostAssets['env_admin_disabled'] ?? [] as $path => $changed) {
+            if ($changed) {
+                $this->info('   ✅ Set ATU_RANKSEO_ADMIN_ENABLED=false in '.basename((string) $path).' (package route registration off; host routes/web.php owns admin URLs).');
+            }
+        }
+
+        if (($routes['appended'] ?? false) === false && ($routes['skipped'] ?? false) === false) {
+            $this->line('   ℹ️  ATU_RANKSEO_ADMIN_ENABLED left unchanged (package may still register admin routes).');
+        }
     }
 
     private function displaySetupResults(): void
     {
         $this->line('   ℹ️  Models, services, and admin Livewire UI load from the package (Vormia\\ATURankSEO\\*).');
         $this->line('   ℹ️  Optional: php artisan vendor:publish --tag=aturankseo-config');
+        $this->line('   ℹ️  Default install copies admin Blade views into resources/views/... and appends routes to routes/web.php (use --skip-host-copy to keep package-only routes).');
     }
 
     /**
@@ -160,7 +220,7 @@ class ATURankSEOInstallCommand extends Command
         }
     }
 
-    private function displayCompletionMessage(bool $envTouched, bool $migrationsRun): void
+    private function displayCompletionMessage(bool $envTouched, bool $migrationsRun, bool $hostCopySkipped): void
     {
         $this->newLine();
         $this->info('🎉 ATU Rank SEO package installed successfully!');
@@ -169,6 +229,9 @@ class ATURankSEOInstallCommand extends Command
         $this->comment('📋 Next steps:');
         $this->line('   1. Optional: php artisan vendor:publish --tag=aturankseo-config');
         $this->line('   2. Ensure Livewire and your admin layout/components (e.g. x-admin-panel) are available.');
+        if (! $hostCopySkipped) {
+            $this->line('   2b. Copied views override package views; edit files under resources/views/livewire/admin/atu/rank-seo/ as needed.');
+        }
 
         if (! $migrationsRun) {
             $this->line('   3. Run migrations: php artisan migrate');

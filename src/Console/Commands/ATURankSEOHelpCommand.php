@@ -45,8 +45,8 @@ class ATURankSEOHelpCommand extends Command
         $commands = [
             [
                 'command' => 'aturankseo:install',
-                'description' => 'Apply .env keys and optionally run migrate / seed (package code stays in vendor)',
-                'options' => '--skip-env (leave .env untouched)',
+                'description' => 'Apply .env keys, copy admin views + append routes/web.php by default, then optional migrate / seed',
+                'options' => '--skip-env (skip initial ATU env block merge), --skip-host-copy (package registers routes; no view copy), --force (overwrite copied Blade views)',
             ],
             [
                 'command' => 'aturankseo:update',
@@ -89,7 +89,12 @@ class ATURankSEOHelpCommand extends Command
             [
                 'title' => 'Install (Skip Environment)',
                 'command' => 'php artisan aturankseo:install --skip-env',
-                'description' => 'Install without modifying .env files',
+                'description' => 'Skip merging the default ATU env block; host copy still sets ATU_RANKSEO_ADMIN_ENABLED=false when routes/views are copied',
+            ],
+            [
+                'title' => 'Install (Package-only routes)',
+                'command' => 'php artisan aturankseo:install --skip-host-copy',
+                'description' => 'Do not copy views or append routes/web.php; package registers admin routes (ATU_RANKSEO_ADMIN_ENABLED stays true if added)',
             ],
             [
                 'title' => 'Update env keys',
@@ -132,7 +137,7 @@ class ATURankSEOHelpCommand extends Command
         $envKeys = [
             ['key' => 'ATU_RANKSEO_ENABLED', 'value' => 'true', 'description' => 'Master enable/disable for SEO resolution'],
             ['key' => 'ATU_RANKSEO_CACHE_TTL', 'value' => '3600', 'description' => 'Cache TTL in seconds (mirrors config cache.ttl)'],
-            ['key' => 'ATU_RANKSEO_ADMIN_ENABLED', 'value' => 'true', 'description' => 'When false, the package does not register admin Livewire routes'],
+            ['key' => 'ATU_RANKSEO_ADMIN_ENABLED', 'value' => 'true', 'description' => 'When false, the package does not register admin Livewire routes (default install sets false after copying routes to web.php)'],
         ];
 
         $this->line('  <fg=cyan># ATU Rank SEO Configuration</>');
@@ -150,7 +155,7 @@ class ATURankSEOHelpCommand extends Command
         $this->info('🛣️  ADMIN ROUTES (Livewire 4):');
         $this->newLine();
 
-        $this->line('  <fg=white>Registered by the package when config atu-rank-seo.enabled and atu-rank-seo.admin.enabled are true:</>');
+        $this->line('  <fg=white>Registered by the package when config atu-rank-seo.enabled and atu-rank-seo.admin.enabled are true, or by your routes/web.php block after install (env admin false):</>');
         $this->newLine();
 
         $this->line("  <fg=cyan>GET .../admin/atu/rank-seo</> → <fg=white>rank-seo.index</>  (name: admin.atu.rank-seo.index)</>");

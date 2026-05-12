@@ -23,7 +23,7 @@ class ATURankSEOUninstallCommand extends Command
         $this->error('⚠️  This prepares removal of ATU Rank SEO from your application.');
         $this->warn('   • Optional: remove ATU Rank SEO environment variables');
         $this->warn('   • Optional: roll back package migrations (deletes data in ATU Rank SEO tables)');
-        $this->warn('   • Admin routes are registered by the package; remove the Composer package to stop them');
+            $this->warn('   • Admin routes may live in routes/web.php if you ran aturankseo:install without --skip-host-copy; remove the marked block manually if needed');
         $this->warn('   • Composer packages are NOT removed by this command');
         $this->newLine();
 

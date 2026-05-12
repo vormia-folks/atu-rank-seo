@@ -1,10 +1,19 @@
 # Release Notes
 
-## [v1.3.1] - 2026-05-12
+## [v2.0.0] - 2026-05-12
+
+### Major release
+
+- **Default host integration on install**: `aturankseo:install` copies admin Blade views into the host app and appends Livewire routes to `routes/web.php` unless `--skip-host-copy` is used; migrations and package code remain in vendor.
+- **Livewire 4 admin UI**: Admin screens use Livewire 4 full-page components; the service provider registers `Livewire::addLocation` for the host view tree first (when present), then the package path.
+- **Breaking-change baseline**: Promotes the v1.3.x package-first and Livewire 4 changes to the v2.0.0 release line because they change host-app integration behavior.
+
+- **`aturankseo:install`** (default): copies `resources/views/livewire/admin/atu/rank-seo/*.blade.php` into the host app, appends a marked Livewire route group to `routes/web.php`, and sets `ATU_RANKSEO_ADMIN_ENABLED=false` so the host owns admin URLs. **`--skip-host-copy`** keeps package-only routes and views. **`--force`** overwrites existing copied Blade files.
+- **Service provider**: `Livewire::addLocation` registers the host `resources/views/livewire/admin/atu` directory first when it exists, then the package path, so copied views override vendor.
 
 ### Documentation and stubs
 
-- **README**: Aligned with Livewire 4 package-first routing (no Volt), correct install/uninstall behavior, env keys (`ATU_RANKSEO_ADMIN_ENABLED`), vendor paths (`vormia-folks/atu-rank-seo`), and requirements from `composer.json`. Added stub-folder overview and admin component/view table.
+- **README**: Documents default host copy on install, `--skip-host-copy` / `--force`, Livewire 4 routing (no Volt), uninstall behavior, env keys (`ATU_RANKSEO_ADMIN_ENABLED`), vendor paths (`vormia-folks/atu-rank-seo`), and requirements from `composer.json`. Stub-folder overview and admin component/view table.
 - **Stubs**: Single Flux sidebar reference at `src/stubs/reference/sidebar-menu-to-add.blade.php` (Multicurrency-style). Added `src/stubs/resources/views/livewire/admin/atu/rank-seo/` as Multicurrency-style **mirror copies** of shipped Blade templates (with stub headers).
 - **Examples**: Replaced legacy Volt-style `example-package/rank-seo/*.blade.php` files with the same templates as `resources/views/livewire/admin/atu/rank-seo/` (admin UI uses Livewire single-file components in those blades).
 - **Docs**: Merged `docs/atu-rank-seo-ui.md` into a single [docs/atu-rank-seo.md](docs/atu-rank-seo.md) (TOC, service APIs, admin UI, Livewire 4, stubs, Vormia `WithNotifications` vs `WithRankSeoToasts`, events). Removed `docs/atu-rank-seo-ui.md`.
@@ -16,7 +25,7 @@
 
 ### Breaking changes
 
-- **Package-first install**: The installer no longer copies migrations, views, or config into the host app. Migrations load via `loadMigrationsFrom`; admin UI views load via `loadViewsFrom`; optional `php artisan vendor:publish --tag=aturankseo-config` publishes config only.
+- **Package-first install**: The installer no longer copies migrations, views, or config into the host app. Migrations load via `loadMigrationsFrom`; admin UI views load via `Livewire::addLocation` on the package view tree; optional `php artisan vendor:publish --tag=aturankseo-config` publishes config only.
 - **Routes**: Admin routes are registered by `ATURankSEOServiceProvider` (Livewire 4 full-page component classes). The old commented block injected into `routes/web.php` is removed. Delete any leftover `// >>> ATU Rank SEO Routes` block from a previous install if it is still present.
 - **Volt removed**: Admin screens use `Livewire\Component` PHP classes under `Vormia\ATURankSEO\Livewire\...` plus Blade views; `livewire/livewire` `^4.0` is now a required dependency.
 - **Notifications**: `App\Traits\Vrm\Livewire\WithNotifications` is replaced by an in-package toast helper (`WithRankSeoToasts`).

@@ -42,6 +42,11 @@ class ATURankSEOServiceProvider extends ServiceProvider
     {
         $this->loadMigrationsFrom(ATURankSEO::basePath('database/migrations'));
 
+        $hostAtuLivewireViews = $this->app->resourcePath('views/livewire/admin/atu');
+        if (is_dir($hostAtuLivewireViews)) {
+            Livewire::addLocation(viewPath: $hostAtuLivewireViews);
+        }
+
         Livewire::addLocation(
             viewPath: ATURankSEO::basePath('resources/views/livewire/admin/atu')
         );
