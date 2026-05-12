@@ -1,3 +1,4 @@
+{{-- Section 1: Navlist / admin-panel style --}}
 {{-- >>> ATU Rank SEO Sidebar START --}}
 @if (auth()->user()?->isAdminOrSuperAdmin())
 	<hr />
@@ -20,4 +21,16 @@
 		{{ __('SEO Settings') }}
 	</flux:navlist.item>
 @endif
-{{-- >>> ATU Rank SEO Sidebar END --}}
+{{-- <<< ATU Rank SEO Sidebar END --}}
+
+{{-- Section 2: Flux sidebar — inject inside flux:sidebar.group (e.g. Platform), before </flux:sidebar.group> --}}
+{{-- Wrap with @if(auth()->user()?->isAdminOrSuperAdmin()) if the layout is not already admin-only. --}}
+<flux:sidebar.item icon="magnifying-glass" :href="route('admin.atu.rank-seo.index')" :current="request()->routeIs('admin.atu.rank-seo.index') || request()->routeIs('admin.atu.rank-seo.edit')" wire:navigate>
+	{{ __('SEO Entries') }}
+</flux:sidebar.item>
+<flux:sidebar.item icon="photo" :href="route('admin.atu.rank-seo.media.index')" :current="request()->routeIs('admin.atu.rank-seo.media.*')" wire:navigate>
+	{{ __('Media SEO') }}
+</flux:sidebar.item>
+<flux:sidebar.item icon="cog-6-tooth" :href="route('admin.atu.rank-seo.settings')" :current="request()->routeIs('admin.atu.rank-seo.settings')" wire:navigate>
+	{{ __('SEO Settings') }}
+</flux:sidebar.item>

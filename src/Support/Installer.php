@@ -324,6 +324,130 @@ PHP;
     }
 
     /**
+     * Remove the marked ATU Rank SEO route block from the host routes/web.php (same markers as install).
+     *
+     * @return array{removed: bool, reason?: string}
+     */
+    public function removeRankSeoRoutesFromWebPhp(): array
+    {
+        $webPhp = $this->pathJoin($this->appBasePath, 'routes/web.php');
+
+        if (! $this->files->exists($webPhp)) {
+            return ['removed' => false, 'reason' => 'routes/web.php not found'];
+        }
+
+        $content = $this->files->get($webPhp);
+
+        if (! str_contains($content, self::WEB_ROUTES_MARKER_START)) {
+            return ['removed' => false, 'reason' => 'ATU Rank SEO route start marker not found'];
+        }
+
+        if (! str_contains($content, self::WEB_ROUTES_MARKER_END)) {
+            return ['removed' => false, 'reason' => 'ATU Rank SEO end marker missing (web.php not changed)'];
+        }
+
+        $lines = preg_split('/\r\n|\r|\n/', $content);
+        $startIdx = null;
+        $endIdx = null;
+
+        foreach ($lines as $i => $line) {
+            if ($startIdx === null && str_starts_with(ltrim((string) $line), self::WEB_ROUTES_MARKER_START)) {
+                $startIdx = $i;
+
+                continue;
+            }
+
+            if ($startIdx !== null && $endIdx === null && str_starts_with(trim((string) $line), self::WEB_ROUTES_MARKER_END)) {
+                $endIdx = $i;
+
+                break;
+            }
+        }
+
+        if ($startIdx === null || $endIdx === null || $endIdx < $startIdx) {
+            return ['removed' => false, 'reason' => 'Could not locate ATU Rank SEO route block boundaries'];
+        }
+
+        $merged = array_merge(
+            array_slice($lines, 0, $startIdx),
+            array_slice($lines, $endIdx + 1)
+        );
+        $out = preg_replace("/[\r\n]{3,}/", "\n\n", implode(PHP_EOL, $merged));
+
+        $this->files->put($webPhp, rtrim((string) $out).PHP_EOL);
+
+        return ['removed' => true];
+    }
+
+    /**
+     * Delete host copies of package rank-seo Livewire blades (same filenames as package stubs).
+     *
+     * @return array{deleted: array<int, string>, missing: array<int, string>, reason?: string}
+     */
+    public function removeRankSeoViewsFromHost(string $packageBasePath): array
+    {
+        $source = $this->pathJoin($packageBasePath, 'src/stubs/resources/views/livewire/admin/atu/rank-seo');
+        $dest = $this->pathJoin($this->appBasePath, 'resources/views/livewire/admin/atu/rank-seo');
+
+        $deleted = [];
+        $missing = [];
+
+        if (! $this->files->isDirectory($source)) {
+            return ['deleted' => [], 'missing' => [], 'reason' => 'package rank-seo views directory not found'];
+        }
+
+        foreach ($this->files->files($source) as $fileInfo) {
+            $name = $fileInfo->getFilename();
+            if (! str_ends_with($name, '.blade.php')) {
+                continue;
+            }
+
+            $target = $this->pathJoin($dest, $name);
+            if (! $this->files->exists($target)) {
+                $missing[] = $name;
+
+                continue;
+            }
+
+            $this->files->delete($target);
+            $deleted[] = $name;
+        }
+
+        if ($this->files->isDirectory($dest) && count($this->files->files($dest)) === 0) {
+            $this->files->deleteDirectory($dest);
+        }
+
+        return ['deleted' => $deleted, 'missing' => $missing];
+    }
+
+    /**
+     * Strip install-injected web routes, remove copied admin views, and set ATU_RANKSEO_ADMIN_ENABLED=true
+     * when the route block was removed (so the package can register admin routes again).
+     *
+     * @return array{
+     *     routes: array{removed: bool, reason?: string},
+     *     views: array{deleted: array<int, string>, missing: array<int, string>, reason?: string},
+     *     env_admin_restored: array<string, bool>
+     * }
+     */
+    public function uninstallHostAdminAssets(string $packageBasePath): array
+    {
+        $routes = $this->removeRankSeoRoutesFromWebPhp();
+        $views = $this->removeRankSeoViewsFromHost($packageBasePath);
+
+        $envAdminRestored = [];
+        if (($routes['removed'] ?? false) === true) {
+            $envAdminRestored = $this->setEnvKeyInHostFiles('ATU_RANKSEO_ADMIN_ENABLED', 'true');
+        }
+
+        return [
+            'routes' => $routes,
+            'views' => $views,
+            'env_admin_restored' => $envAdminRestored,
+        ];
+    }
+
+    /**
      * Set a single env key in .env and .env.example (update existing line or append).
      *
      * @return array<string, bool> path => changed

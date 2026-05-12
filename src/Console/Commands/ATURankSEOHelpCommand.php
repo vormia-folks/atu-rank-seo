@@ -55,8 +55,8 @@ class ATURankSEOHelpCommand extends Command
             ],
             [
                 'command' => 'aturankseo:uninstall',
-                'description' => 'Remove .env keys and optionally roll back package migrations',
-                'options' => '--keep-env (preserve env keys), --force (skip confirmation prompts)',
+                'description' => 'Remove .env keys, optional host routes/web.php block + copied views, and optionally roll back package migrations',
+                'options' => '--keep-env (preserve env keys), --keep-host-files (preserve injected web.php + copied rank-seo views), --force (skip confirmation prompts; removes host files unless --keep-host-files)',
             ],
             [
                 'command' => 'aturankseo:help',
@@ -104,7 +104,7 @@ class ATURankSEOHelpCommand extends Command
             [
                 'title' => 'Uninstall Package',
                 'command' => 'php artisan aturankseo:uninstall',
-                'description' => 'Prompt to remove env keys and optionally roll back migrations',
+                'description' => 'Prompt to remove env keys, host web.php / copied views, and optionally roll back migrations',
             ],
             [
                 'title' => 'Uninstall (Keep Environment)',
@@ -114,7 +114,12 @@ class ATURankSEOHelpCommand extends Command
             [
                 'title' => 'Force Uninstall',
                 'command' => 'php artisan aturankseo:uninstall --force',
-                'description' => 'Skip confirmation prompts (defaults: keep migrations, remove env)',
+                'description' => 'Skip confirmation prompts (defaults: keep migrations, remove env, remove host routes/views unless --keep-host-files)',
+            ],
+            [
+                'title' => 'Uninstall (Keep host routes and views)',
+                'command' => 'php artisan aturankseo:uninstall --keep-host-files',
+                'description' => 'Do not strip the ATU Rank SEO web.php block or delete copied rank-seo Blade files',
             ],
         ];
 

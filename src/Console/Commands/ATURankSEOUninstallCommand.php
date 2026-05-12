@@ -9,9 +9,12 @@ use Illuminate\Support\Facades\Artisan;
 
 class ATURankSEOUninstallCommand extends Command
 {
-    protected $signature = 'aturankseo:uninstall {--keep-env : Leave env keys untouched} {--force : Skip confirmation prompts}';
+    protected $signature = 'aturankseo:uninstall
+                            {--keep-env : Leave env keys untouched}
+                            {--keep-host-files : Do not remove injected routes/web.php block or copied rank-seo views}
+                            {--force : Skip confirmation prompts}';
 
-    protected $description = 'Remove ATU Rank SEO env keys and optionally roll back package migrations';
+    protected $description = 'Remove ATU Rank SEO env keys, optional host routes/views, and optionally roll back package migrations';
 
     public function handle(Installer $installer): int
     {
@@ -19,11 +22,12 @@ class ATURankSEOUninstallCommand extends Command
 
         $force = $this->option('force');
         $keepEnv = $this->option('keep-env');
+        $keepHostFiles = $this->option('keep-host-files');
 
         $this->error('⚠️  This prepares removal of ATU Rank SEO from your application.');
         $this->warn('   • Optional: remove ATU Rank SEO environment variables');
         $this->warn('   • Optional: roll back package migrations (deletes data in ATU Rank SEO tables)');
-            $this->warn('   • Admin routes may live in routes/web.php if you ran aturankseo:install without --skip-host-copy; remove the marked block manually if needed');
+        $this->warn('   • Optional: remove the ATU Rank SEO block from routes/web.php and copied Livewire views (unless --keep-host-files)');
         $this->warn('   • Composer packages are NOT removed by this command');
         $this->newLine();
 
@@ -50,6 +54,30 @@ class ATURankSEOUninstallCommand extends Command
             $removeEnvVars = true;
         }
 
+        $removeHostAssets = false;
+        if ($keepHostFiles) {
+            $removeHostAssets = false;
+        } elseif ($force) {
+            $removeHostAssets = true;
+        } else {
+            $this->newLine();
+            $removeHostAssets = $this->confirm('Remove the injected routes/web.php block (ATU Rank SEO markers) and copied rank-seo Blade files from your app?', false);
+        }
+
+        $hostUninstall = null;
+        if ($removeHostAssets) {
+            $this->step('Removing host admin routes and copied views...');
+            $hostUninstall = $installer->uninstallHostAdminAssets(ATURankSEO::basePath());
+            $this->displayHostUninstallResults($hostUninstall);
+        } else {
+            $this->step('Skipping host routes/views removal...');
+            if ($keepHostFiles) {
+                $this->line('   ⏭️  Preserved (--keep-host-files).');
+            } else {
+                $this->line('   ⏭️  Skipped by user choice.');
+            }
+        }
+
         $touchEnv = $removeEnvVars;
         $results = $installer->uninstall($touchEnv);
 
@@ -71,9 +99,44 @@ class ATURankSEOUninstallCommand extends Command
         $this->step('Clearing application caches...');
         $this->clearCaches();
 
-        $this->displayCompletionMessage($removeEnvVars, $undoMigrations);
+        $this->displayCompletionMessage($removeEnvVars, $undoMigrations, $removeHostAssets, $hostUninstall);
 
         return self::SUCCESS;
+    }
+
+    /**
+     * @param  array{
+     *     routes: array{removed: bool, reason?: string},
+     *     views: array{deleted: array<int, string>, missing: array<int, string>, reason?: string},
+     *     env_admin_restored: array<string, bool>
+     * }  $hostUninstall
+     */
+    private function displayHostUninstallResults(array $hostUninstall): void
+    {
+        $routes = $hostUninstall['routes'] ?? [];
+        if (($routes['removed'] ?? false) === true) {
+            $this->info('   ✅ Removed ATU Rank SEO route block from routes/web.php');
+        } else {
+            $this->line('   ℹ️  routes/web.php: '.($routes['reason'] ?? 'route block not removed'));
+        }
+
+        $views = $hostUninstall['views'] ?? [];
+        foreach ($views['deleted'] ?? [] as $file) {
+            $this->info('   ✅ Deleted copied view: '.$file);
+        }
+        if (($views['deleted'] ?? []) === []) {
+            if (! empty($views['reason'] ?? null)) {
+                $this->line('   ℹ️  Views: '.$views['reason']);
+            } else {
+                $this->line('   ℹ️  No copied rank-seo Blade files removed (already absent or not installed).');
+            }
+        }
+
+        foreach ($hostUninstall['env_admin_restored'] ?? [] as $path => $changed) {
+            if ($changed) {
+                $this->info('   ✅ Set ATU_RANKSEO_ADMIN_ENABLED=true in '.basename((string) $path).' (package may register admin routes again).');
+            }
+        }
     }
 
     /**
@@ -174,7 +237,14 @@ class ATURankSEOUninstallCommand extends Command
         $this->info("🗂️  {$message}");
     }
 
-    private function displayCompletionMessage(bool $envRemoved, bool $migrationsUndone): void
+    /**
+     * @param  array{
+     *     routes: array{removed: bool, reason?: string},
+     *     views: array{deleted: array<int, string>, missing: array<int, string>, reason?: string},
+     *     env_admin_restored: array<string, bool>
+     * }|null  $hostUninstall
+     */
+    private function displayCompletionMessage(bool $envRemoved, bool $migrationsUndone, bool $hostRemovalChosen, ?array $hostUninstall): void
     {
         $this->newLine();
         $this->info('🎉 ATU Rank SEO uninstall steps completed.');
@@ -190,6 +260,19 @@ class ATURankSEOUninstallCommand extends Command
             $this->line('   ✅ migrate:rollback was run for the package migration directory');
         } else {
             $this->line('   ⏭️  Database migrations not rolled back');
+        }
+        if ($hostRemovalChosen && $hostUninstall !== null) {
+            if (($hostUninstall['routes']['removed'] ?? false) === true) {
+                $this->line('   ✅ Host routes/web.php ATU Rank SEO block removed');
+            } else {
+                $this->line('   ℹ️  Host routes/web.php unchanged: '.($hostUninstall['routes']['reason'] ?? 'unknown'));
+            }
+            $deleted = $hostUninstall['views']['deleted'] ?? [];
+            if ($deleted !== []) {
+                $this->line('   ✅ Copied rank-seo views removed ('.count($deleted).' file(s))');
+            }
+        } elseif (! $hostRemovalChosen) {
+            $this->line('   ⏭️  Host routes/views cleanup skipped or not selected');
         }
         $this->line('   ✅ Application caches cleared');
         $this->newLine();

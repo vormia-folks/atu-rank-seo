@@ -115,4 +115,106 @@ class InstallerHostAssetsTest extends TestCase
             $fs->deleteDirectory($base);
         }
     }
+
+    public function test_remove_rank_seo_routes_from_web_php_strips_marked_block(): void
+    {
+        $base = $this->tempAppPath();
+        $fs = new Filesystem;
+
+        try {
+            $fs->ensureDirectoryExists($base.'/routes');
+            $fs->put($base.'/routes/web.php', "<?php\n\n");
+            $installer = new Installer($fs, $base);
+            $installer->appendRankSeoRoutesToWebPhp(['web', 'auth'], 'admin/atu');
+
+            $removed = $installer->removeRankSeoRoutesFromWebPhp();
+            $this->assertTrue($removed['removed']);
+
+            $content = $fs->get($base.'/routes/web.php');
+            $this->assertStringNotContainsString(Installer::WEB_ROUTES_MARKER_START, $content);
+            $this->assertStringNotContainsString(Installer::WEB_ROUTES_MARKER_END, $content);
+        } finally {
+            $fs->deleteDirectory($base);
+        }
+    }
+
+    public function test_remove_rank_seo_routes_from_web_php_noop_without_markers(): void
+    {
+        $base = $this->tempAppPath();
+        $fs = new Filesystem;
+
+        try {
+            $fs->ensureDirectoryExists($base.'/routes');
+            $original = "<?php\n\nRoute::get('/', fn () => 'ok');\n";
+            $fs->put($base.'/routes/web.php', $original);
+            $installer = new Installer($fs, $base);
+
+            $removed = $installer->removeRankSeoRoutesFromWebPhp();
+            $this->assertFalse($removed['removed']);
+            $this->assertSame($original, $fs->get($base.'/routes/web.php'));
+        } finally {
+            $fs->deleteDirectory($base);
+        }
+    }
+
+    public function test_remove_rank_seo_routes_from_web_php_noop_when_end_marker_missing(): void
+    {
+        $base = $this->tempAppPath();
+        $fs = new Filesystem;
+
+        try {
+            $fs->ensureDirectoryExists($base.'/routes');
+            $broken = "<?php\n\n".Installer::WEB_ROUTES_MARKER_START."\n// incomplete\n";
+            $fs->put($base.'/routes/web.php', $broken);
+            $installer = new Installer($fs, $base);
+
+            $removed = $installer->removeRankSeoRoutesFromWebPhp();
+            $this->assertFalse($removed['removed']);
+            $this->assertStringContainsString(Installer::WEB_ROUTES_MARKER_START, $fs->get($base.'/routes/web.php'));
+        } finally {
+            $fs->deleteDirectory($base);
+        }
+    }
+
+    public function test_remove_rank_seo_views_from_host_deletes_copied_blades(): void
+    {
+        $base = $this->tempAppPath();
+        $fs = new Filesystem;
+
+        try {
+            $installer = new Installer($fs, $base);
+            $installer->copyRankSeoViewsFromPackage(ATURankSEO::basePath(), false);
+            $this->assertFileExists($base.'/resources/views/livewire/admin/atu/rank-seo/index.blade.php');
+
+            $result = $installer->removeRankSeoViewsFromHost(ATURankSEO::basePath());
+            $this->assertContains('index.blade.php', $result['deleted']);
+            $this->assertFileDoesNotExist($base.'/resources/views/livewire/admin/atu/rank-seo/index.blade.php');
+        } finally {
+            $fs->deleteDirectory($base);
+        }
+    }
+
+    public function test_uninstall_host_admin_assets_restores_admin_env_when_routes_removed(): void
+    {
+        $base = $this->tempAppPath();
+        $fs = new Filesystem;
+
+        try {
+            $fs->ensureDirectoryExists($base.'/routes');
+            $fs->put($base.'/routes/web.php', "<?php\n\n");
+            $fs->ensureDirectoryExists($base);
+            $fs->put($base.'/.env', "ATU_RANKSEO_ADMIN_ENABLED=false\n");
+
+            $installer = new Installer($fs, $base);
+            $installer->appendRankSeoRoutesToWebPhp(['web', 'auth'], 'admin/atu');
+
+            $out = $installer->uninstallHostAdminAssets(ATURankSEO::basePath());
+
+            $this->assertTrue($out['routes']['removed']);
+            $this->assertTrue($out['env_admin_restored'][$base.'/.env']);
+            $this->assertStringContainsString('ATU_RANKSEO_ADMIN_ENABLED=true', $fs->get($base.'/.env'));
+        } finally {
+            $fs->deleteDirectory($base);
+        }
+    }
 }

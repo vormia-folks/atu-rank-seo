@@ -139,11 +139,11 @@ After **`php artisan aturankseo:install`** (without `--skip-host-copy`), a marke
 
 ### Manual routes (optional)
 
-If you disable package route registration (`ATU_RANKSEO_ADMIN_ENABLED=false` or `admin.enabled` false) and you do not rely on the install-generated `web.php` block, register the same endpoints yourself. Use the same markers as a default install (`// >>> ATU Rank SEO start` … `// <<< ATU Rank SEO end`), or copy from the package reference (adjust middleware/prefix to match your app):
+If you disable package route registration (`ATU_RANKSEO_ADMIN_ENABLED=false` or `admin.enabled` false) and you do not rely on the install-generated `web.php` block, register the same endpoints yourself. The installer writes a block delimited by `// >>> ATU Rank SEO start` … `// <<< ATU Rank SEO end` (see `Vormia\ATURankSEO\Support\Installer`). For a paste-ready variant without the generated middleware wrapper, use:
 
 `vendor/vormia-folks/atu-rank-seo/src/stubs/reference/routes-to-add.php`
 
-The stub uses `Route::livewire(...)` with the five component name strings listed above. Ensure `Livewire::addLocation` points at the same view tree (package stubs path or your copied files under your app’s `resources/views/livewire/admin/atu/`).
+That reference uses `// >>> ATU Rank SEO Web Routes START` … `// <<< ATU Rank SEO Web Routes END`; adjust middleware and prefix to match your app if you merge it manually.
 
 ### Stub folders (reference vs shipped views)
 
@@ -154,7 +154,7 @@ These paths are under the package root (or `vendor/vormia-folks/atu-rank-seo/` w
 
 ### Sidebar (Flux)
 
-For Flux-based sidebars, paste the snippet from:
+The reference file contains **two** snippets: `flux:navlist.item` (admin panel / navlist) and `flux:sidebar.item` (inject inside `flux:sidebar.group`, e.g. Platform, before `</flux:sidebar.group>`). Paste the section that matches your layout:
 
 `vendor/vormia-folks/atu-rank-seo/src/stubs/reference/sidebar-menu-to-add.blade.php`
 
@@ -162,7 +162,7 @@ For Flux-based sidebars, paste the snippet from:
 
 - `php artisan aturankseo:install` — Env keys, copy admin views + append `routes/web.php` by default (`--skip-host-copy`, `--skip-env`, `--force`)
 - `php artisan aturankseo:update` — Re-apply env keys
-- `php artisan aturankseo:uninstall` — Optional env removal, optional migration rollback, cache clears
+- `php artisan aturankseo:uninstall` — Optional env removal, optional host `web.php` + copied views cleanup, optional migration rollback, cache clears (`--keep-env`, `--keep-host-files`, `--force`)
 - `php artisan aturankseo:help` — Show env keys and route summary
 
 ## Uninstallation
@@ -173,16 +173,16 @@ php artisan aturankseo:uninstall
 
 ### What the uninstall command does
 
-1. Optionally removes ATU Rank SEO keys from `.env` / `.env.example` (with confirmation, unless `--force` / `--keep-env`)
-2. Optionally rolls back package migrations (with confirmation; destructive to package tables)
-3. Clears config, route, view, and application caches
-
-It does **not** edit `routes/web.php` (including any `// >>> ATU Rank SEO start` block added by `aturankseo:install`) and does **not** delete copied Blade views under your app’s `resources/views/.../rank-seo/`.
+1. Optionally removes the ATU Rank SEO block from `routes/web.php` (markers `// >>> ATU Rank SEO start` … `// <<< ATU Rank SEO end`) and deletes copied Livewire blades under `resources/views/livewire/admin/atu/rank-seo/` (with confirmation, unless `--force`; skipped with `--keep-host-files` or if you decline the prompt). When the route block is removed, `ATU_RANKSEO_ADMIN_ENABLED` is set to `true` in `.env` / `.env.example` (if those files exist) so the package can register admin routes again—**before** optional full env key removal, so a combined “remove everything” run does not leave that key behind.
+2. Optionally removes ATU Rank SEO keys from `.env` / `.env.example` (with confirmation, unless `--force` / `--keep-env`)
+3. Optionally rolls back package migrations (with confirmation; destructive to package tables)
+4. Clears config, route, view, and application caches
 
 ### Options
 
 - `--keep-env`: Preserve environment variables
-- `--force`: Skip confirmation prompts
+- `--keep-host-files`: Do not remove the injected `web.php` block or copied `rank-seo` Blade files
+- `--force`: Skip confirmation prompts (host routes/views are removed unless `--keep-host-files`)
 
 ### After uninstall
 
@@ -192,9 +192,11 @@ It does **not** edit `routes/web.php` (including any `// >>> ATU Rank SEO start`
    composer remove vormia-folks/atu-rank-seo
    ```
 
-2. Remove the ATU Rank SEO route block from `routes/web.php` and any copied views under your app’s `resources/views/livewire/admin/atu/rank-seo/` if you no longer need them, plus any custom sidebar links.
+2. Remove any custom sidebar links you added from the reference snippets (if applicable).
 
-3. To reinstall: `composer require vormia-folks/atu-rank-seo` and `php artisan aturankseo:install`.
+3. If you used `--keep-host-files` or skipped host cleanup, remove the ATU Rank SEO route block and copied views manually when you no longer need them.
+
+4. To reinstall: `composer require vormia-folks/atu-rank-seo` and `php artisan aturankseo:install`.
 
 ## Database Schema
 
