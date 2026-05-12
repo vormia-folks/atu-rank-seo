@@ -48,7 +48,7 @@ class ATURankSEOServiceProvider extends ServiceProvider
         }
 
         Livewire::addLocation(
-            viewPath: ATURankSEO::basePath('resources/views/livewire/admin/atu')
+            viewPath: ATURankSEO::stubsPath('resources/views/livewire/admin/atu')
         );
 
         $this->registerAdminRoutes();

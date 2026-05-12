@@ -4,18 +4,18 @@
 
 ### Major release
 
-- **Default host integration on install**: `aturankseo:install` copies admin Blade views into the host app and appends Livewire routes to `routes/web.php` unless `--skip-host-copy` is used; migrations and package code remain in vendor.
-- **Livewire 4 admin UI**: Admin screens use Livewire 4 full-page components; the service provider registers `Livewire::addLocation` for the host view tree first (when present), then the package path.
+- **Default host integration on install**: `aturankseo:install` copies admin Blade views from `src/stubs/resources/views/...` into the host app and appends Livewire routes to `routes/web.php` unless `--skip-host-copy` is used; migrations and package code remain in vendor.
+- **Livewire 4 admin UI**: Admin screens use Livewire 4 full-page components; the service provider registers `Livewire::addLocation` for the host view tree first (when present), then the package stubs view tree under `src/stubs/resources/views/livewire/admin/atu`.
 - **Breaking-change baseline**: Promotes the v1.3.x package-first and Livewire 4 changes to the v2.0.0 release line because they change host-app integration behavior.
 
-- **`aturankseo:install`** (default): copies `resources/views/livewire/admin/atu/rank-seo/*.blade.php` into the host app, appends a marked Livewire route group to `routes/web.php`, and sets `ATU_RANKSEO_ADMIN_ENABLED=false` so the host owns admin URLs. **`--skip-host-copy`** keeps package-only routes and views. **`--force`** overwrites existing copied Blade files.
-- **Service provider**: `Livewire::addLocation` registers the host `resources/views/livewire/admin/atu` directory first when it exists, then the package path, so copied views override vendor.
+- **`aturankseo:install`** (default): copies `src/stubs/resources/views/livewire/admin/atu/rank-seo/*.blade.php` from the package into the host app’s `resources/views/...`, appends a marked Livewire route group to `routes/web.php`, and sets `ATU_RANKSEO_ADMIN_ENABLED=false` so the host owns admin URLs. **`--skip-host-copy`** keeps package-only routes and views. **`--force`** overwrites existing copied Blade files.
+- **Service provider**: `Livewire::addLocation` registers the host `resources/views/livewire/admin/atu` directory first when it exists, then `src/stubs/resources/views/livewire/admin/atu` in the package, so copied views override vendor.
 
 ### Documentation and stubs
 
 - **README**: Documents default host copy on install, `--skip-host-copy` / `--force`, Livewire 4 routing (no Volt), uninstall behavior, env keys (`ATU_RANKSEO_ADMIN_ENABLED`), vendor paths (`vormia-folks/atu-rank-seo`), and requirements from `composer.json`. Stub-folder overview and admin component/view table.
-- **Stubs**: Single Flux sidebar reference at `src/stubs/reference/sidebar-menu-to-add.blade.php` (Multicurrency-style). Added `src/stubs/resources/views/livewire/admin/atu/rank-seo/` as Multicurrency-style **mirror copies** of shipped Blade templates (with stub headers).
-- **Examples**: Replaced legacy Volt-style `example-package/rank-seo/*.blade.php` files with the same templates as `resources/views/livewire/admin/atu/rank-seo/` (admin UI uses Livewire single-file components in those blades).
+- **Stubs / views layout**: Aligns with Multicurrency — **only** `src/stubs/resources/views/livewire/admin/atu/rank-seo/` holds shipped admin Livewire blades; the duplicate `resources/views/...` tree at the package root was removed.
+- **Examples**: `example-package/rank-seo/*.blade.php` remain view-only samples aligned with those templates (admin UI uses Livewire single-file components in the stub blades).
 - **Docs**: Merged `docs/atu-rank-seo-ui.md` into a single [docs/atu-rank-seo.md](docs/atu-rank-seo.md) (TOC, service APIs, admin UI, Livewire 4, stubs, Vormia `WithNotifications` vs `WithRankSeoToasts`, events). Removed `docs/atu-rank-seo-ui.md`.
 - **Installer message**: Completion step mentions the sidebar reference stub.
 

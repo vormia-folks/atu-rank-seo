@@ -17,7 +17,7 @@ class ATURankSEO
     }
 
     /**
-     * @deprecated Use basePath('src/stubs/reference') for documentation snippets.
+     * Path under `src/stubs` (Multicurrency-style): reference snippets, shipped Livewire admin blades, etc.
      */
     public static function stubsPath(string $suffix = ''): string
     {

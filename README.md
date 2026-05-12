@@ -31,11 +31,11 @@ php artisan aturankseo:install
 This will:
 
 - Optionally add environment variables to `.env` and `.env.example` (unless `--skip-env`)
-- **By default**, copy admin Livewire Blade files into `resources/views/livewire/admin/atu/rank-seo/` and append a marked Livewire route group to `routes/web.php`, then set `ATU_RANKSEO_ADMIN_ENABLED=false` so the host owns admin URLs (the package stops registering the same routes). Use `--skip-host-copy` to keep routes and views package-only (previous “package-first” behavior). Use `--force` to overwrite existing copied Blade files.
+- **By default**, copy admin Livewire Blade files from the package (`src/stubs/resources/views/livewire/admin/atu/rank-seo/`, Multicurrency-style) into your app’s `resources/views/livewire/admin/atu/rank-seo/`, append a marked Livewire route group to `routes/web.php`, then set `ATU_RANKSEO_ADMIN_ENABLED=false` so the host owns admin URLs (the package stops registering the same routes). Use `--skip-host-copy` to keep routes and views package-only (previous “package-first” behavior). Use `--force` to overwrite existing copied Blade files.
 - Optionally run `php artisan migrate` (interactive confirmation; default **yes**)
 - Optionally run the package seeder (only after migrations succeed; interactive confirmation; default **yes** — you can answer **no** to skip seeding)
 
-Migrations always load from the package via `loadMigrationsFrom` (they are not copied). When host views exist under `resources/views/livewire/admin/atu/`, `ATURankSEOServiceProvider` registers that path with `Livewire::addLocation` **before** the package path so your copies override vendor. Optional config publish:
+Migrations always load from the package via `loadMigrationsFrom` (they are not copied). When host views exist under your app’s `resources/views/livewire/admin/atu/`, `ATURankSEOServiceProvider` registers that path with `Livewire::addLocation` **before** the package stubs path so your copies override vendor. Optional config publish:
 
 ```bash
 php artisan vendor:publish --tag=aturankseo-config
@@ -121,11 +121,11 @@ $mediaIndexer->registerMedia('media/images/product.jpg', [
 
 ## Admin Panel (Livewire 4)
 
-The admin UI uses **Livewire 4 single-file components** (inline `new class extends Component` in each Blade file), similar to the Multicurrency package. Canonical views ship under `resources/views/livewire/admin/atu/rank-seo/` in the package. After `aturankseo:install` (default), the same files are copied into your app; `ATURankSEOServiceProvider` registers `Livewire::addLocation` for your `resources/views/livewire/admin/atu` directory first when it exists, then the package tree, and routes are typically registered from your `routes/web.php` with `ATU_RANKSEO_ADMIN_ENABLED=false`.
+The admin UI uses **Livewire 4 single-file components** (inline `new class extends Component` in each Blade file), aligned with the Multicurrency package. Shipped views live only under **`src/stubs/resources/views/livewire/admin/atu/rank-seo/`** in this repository (there is no duplicate `resources/views/` tree at the package root). After `aturankseo:install` (default), those files are copied into your app; `ATURankSEOServiceProvider` registers `Livewire::addLocation` for your app’s `resources/views/livewire/admin/atu` directory first when it exists, then the package stubs tree, and routes are typically registered from your `routes/web.php` with `ATU_RANKSEO_ADMIN_ENABLED=false`.
 
-| Screen | Livewire component name | Blade path (package) |
+| Screen | Livewire component name | Blade path (in package) |
 | --- | --- | --- |
-| SEO entries list | `rank-seo.index` | `resources/views/livewire/admin/atu/rank-seo/index.blade.php` |
+| SEO entries list | `rank-seo.index` | `src/stubs/resources/views/livewire/admin/atu/rank-seo/index.blade.php` |
 | Global settings | `rank-seo.settings` | `.../settings.blade.php` |
 | Edit page SEO | `rank-seo.edit` | `.../edit.blade.php` |
 | Media list | `rank-seo.media-index` | `.../media-index.blade.php` |
@@ -143,14 +143,14 @@ If you disable package route registration (`ATU_RANKSEO_ADMIN_ENABLED=false` or 
 
 `vendor/vormia-folks/atu-rank-seo/src/stubs/reference/routes-to-add.php`
 
-The stub uses `Route::livewire(...)` with the five component name strings listed above. Ensure `Livewire::addLocation` points at the same view tree (package path or your copied files under `resources/views/livewire/admin/atu/`).
+The stub uses `Route::livewire(...)` with the five component name strings listed above. Ensure `Livewire::addLocation` points at the same view tree (package stubs path or your copied files under your app’s `resources/views/livewire/admin/atu/`).
 
-### Stub folders (reference vs copy)
+### Stub folders (reference vs shipped views)
 
 These paths are under the package root (or `vendor/vormia-folks/atu-rank-seo/` when installed):
 
 - **`src/stubs/reference/`** — Snippets only (routes, sidebar). `aturankseo:install` appends routes programmatically; use these files when you need to paste or compare custom wiring.
-- **`src/stubs/resources/views/livewire/admin/atu/rank-seo/`** — Mirror copies of the package Blade templates (same layout as other ATU packages such as Multicurrency). Use them as a starting point if you merge views into your application for customization. Keep them in sync with `resources/views/livewire/admin/atu/rank-seo/` in this repository when contributing upstream.
+- **`src/stubs/resources/views/livewire/admin/atu/rank-seo/`** — **Canonical** shipped Livewire admin blades (same layout as Multicurrency under `src/stubs/resources/...`). `aturankseo:install` copies from here into your application when you do not pass `--skip-host-copy`.
 
 ### Sidebar (Flux)
 
@@ -177,7 +177,7 @@ php artisan aturankseo:uninstall
 2. Optionally rolls back package migrations (with confirmation; destructive to package tables)
 3. Clears config, route, view, and application caches
 
-It does **not** edit `routes/web.php` (including any `// >>> ATU Rank SEO start` block added by `aturankseo:install`) and does **not** delete copied Blade views under `resources/views/.../rank-seo/`.
+It does **not** edit `routes/web.php` (including any `// >>> ATU Rank SEO start` block added by `aturankseo:install`) and does **not** delete copied Blade views under your app’s `resources/views/.../rank-seo/`.
 
 ### Options
 
@@ -192,7 +192,7 @@ It does **not** edit `routes/web.php` (including any `// >>> ATU Rank SEO start`
    composer remove vormia-folks/atu-rank-seo
    ```
 
-2. Remove the ATU Rank SEO route block from `routes/web.php` and any copied views under `resources/views/livewire/admin/atu/rank-seo/` if you no longer need them, plus any custom sidebar links.
+2. Remove the ATU Rank SEO route block from `routes/web.php` and any copied views under your app’s `resources/views/livewire/admin/atu/rank-seo/` if you no longer need them, plus any custom sidebar links.
 
 3. To reinstall: `composer require vormia-folks/atu-rank-seo` and `php artisan aturankseo:install`.
 

@@ -1,4 +1,3 @@
-{{-- Stub mirror for host customization; keep in sync with resources/views/livewire/admin/atu/rank-seo/index.blade.php. Not copied by the installer. --}}
 <?php
 
 use Livewire\Attributes\Computed;

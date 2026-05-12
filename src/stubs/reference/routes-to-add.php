@@ -13,8 +13,8 @@
  * same endpoints yourself (custom middleware stack, duplicate names, etc.).
  *
  * Admin UI uses Livewire 4 **single-file components** (PHP + Blade in one file)
- * under `resources/views/livewire/admin/atu/rank-seo/` in the package. The
- * service provider calls `Livewire::addLocation` for that tree; replicate that
+ * under `src/stubs/resources/views/livewire/admin/atu/rank-seo/` in the package. The
+ * service provider calls `Livewire::addLocation` for `src/stubs/resources/views/livewire/admin/atu`; replicate that
  * registration if you copy views into your app.
  *
  * @see https://livewire.laravel.com/docs

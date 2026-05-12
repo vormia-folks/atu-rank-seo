@@ -229,7 +229,7 @@ class Installer
      */
     public function copyRankSeoViewsFromPackage(string $packageBasePath, bool $force = false): array
     {
-        $source = $this->pathJoin($packageBasePath, 'resources/views/livewire/admin/atu/rank-seo');
+        $source = $this->pathJoin($packageBasePath, 'src/stubs/resources/views/livewire/admin/atu/rank-seo');
         $dest = $this->pathJoin($this->appBasePath, 'resources/views/livewire/admin/atu/rank-seo');
 
         $copied = [];

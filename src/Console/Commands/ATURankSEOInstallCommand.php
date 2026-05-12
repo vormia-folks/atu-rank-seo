@@ -106,7 +106,7 @@ class ATURankSEOInstallCommand extends Command
     {
         $this->line('   ℹ️  Models, services, and admin Livewire UI load from the package (Vormia\\ATURankSEO\\*).');
         $this->line('   ℹ️  Optional: php artisan vendor:publish --tag=aturankseo-config');
-        $this->line('   ℹ️  Default install copies admin Blade views into resources/views/... and appends routes to routes/web.php (use --skip-host-copy to keep package-only routes).');
+        $this->line('   ℹ️  Default install copies admin Blade views from the package stubs tree into your app’s resources/views/... and appends routes to routes/web.php (use --skip-host-copy to keep package-only routes).');
     }
 
     /**
