@@ -118,23 +118,21 @@ $mediaIndexer->registerMedia('media/images/product.jpg', [
 
 ## Admin Panel (Livewire 4)
 
-The admin UI uses **Livewire 4 full-page components** (PHP classes extending `Livewire\Component`), not Volt. Components live under `Vormia\ATURankSEO\Livewire\Admin\Atu\RankSeo\`:
+The admin UI uses **Livewire 4 single-file components** (inline `new class extends Component` in each Blade file), similar to the Multicurrency package. Shipped views live under `resources/views/livewire/admin/atu/rank-seo/` in the package; `ATURankSEOServiceProvider` registers them via `Livewire::addLocation` and full-page `Route::livewire(...)`.
 
-| Screen | Class | Blade view (namespace `aturankseo::`) |
+| Screen | Livewire component name | Blade path (package) |
 | --- | --- | --- |
-| SEO entries list | `Index` | `aturankseo::livewire.admin.atu.rank-seo.index` |
-| Global settings | `Settings` | `aturankseo::livewire.admin.atu.rank-seo.settings` |
-| Edit page SEO | `Edit` | `aturankseo::livewire.admin.atu.rank-seo.edit` |
-| Media list | `MediaIndex` | `aturankseo::livewire.admin.atu.rank-seo.media-index` |
-| Edit media SEO | `MediaEdit` | `aturankseo::livewire.admin.atu.rank-seo.media-edit` |
+| SEO entries list | `rank-seo.index` | `resources/views/livewire/admin/atu/rank-seo/index.blade.php` |
+| Global settings | `rank-seo.settings` | `.../settings.blade.php` |
+| Edit page SEO | `rank-seo.edit` | `.../edit.blade.php` |
+| Media list | `rank-seo.media-index` | `.../media-index.blade.php` |
+| Edit media SEO | `rank-seo.media-edit` | `.../media-edit.blade.php` |
 
 Toasts use the in-package concern `Vormia\ATURankSEO\Livewire\Concerns\WithRankSeoToasts` (not application-level notification traits).
 
 ### Routes (default)
 
-When `atu-rank-seo.enabled` and `atu-rank-seo.admin.enabled` are true, `ATURankSEOServiceProvider` registers routes (default prefix `admin/atu`, names `admin.atu.rank-seo.*`). You do **not** need to add a block to `routes/web.php` for the standard setup.
-
-Some apps use `Route::livewire($uri, $component)` (string component name) instead of `Route::get($uri, SomeClass::class)`; both are valid in Livewire 4. This package uses `Route::get(..., Component::class)` in the provider and in the manual stub below for consistency.
+When `atu-rank-seo.enabled` and `atu-rank-seo.admin.enabled` are true, `ATURankSEOServiceProvider` registers routes (default prefix `admin/atu`, names `admin.atu.rank-seo.*`) using `Route::livewire($uri, $componentName)`. You do **not** need to add a block to `routes/web.php` for the standard setup.
 
 ### Manual routes (optional)
 
@@ -142,7 +140,7 @@ If you disable package route registration (`ATU_RANKSEO_ADMIN_ENABLED=false` or 
 
 `vendor/vormia-folks/atu-rank-seo/src/stubs/reference/routes-to-add.php`
 
-The stub uses `Route::get(..., Component::class)` with the five component classes listed above.
+The stub uses `Route::livewire(...)` with the five component name strings listed above. Ensure `Livewire::addLocation` points at the same view tree (package path or your published copy).
 
 ### Stub folders (reference vs copy)
 
@@ -153,11 +151,9 @@ These paths are under the package root (or `vendor/vormia-folks/atu-rank-seo/` w
 
 ### Sidebar (Flux)
 
-For Flux-based sidebars, copy from:
+For Flux-based sidebars, paste the snippet from:
 
-`vendor/vormia-folks/atu-rank-seo/src/stubs/reference/sidebar-flux-menu-to-add.blade.php`
-
-A generic HTML example lives in `src/stubs/reference/sidebar-menu-to-add.blade.php`.
+`vendor/vormia-folks/atu-rank-seo/src/stubs/reference/sidebar-menu-to-add.blade.php`
 
 ## Commands
 

@@ -1,5 +1,101 @@
 {{-- Stub mirror for host customization; keep in sync with resources/views/livewire/admin/atu/rank-seo/index.blade.php. Not copied by the installer. --}}
+<?php
+
+use Livewire\Attributes\Computed;
+use Livewire\Component;
+use Livewire\WithPagination;
+use Vormia\ATURankSEO\Livewire\Concerns\WithRankSeoToasts;
+use Vormia\ATURankSEO\Models\RankSeoMeta;
+
+new class extends Component {
+    use WithPagination;
+    use WithRankSeoToasts;
+
+    public string $search = '';
+
+    public string $typeFilter = '';
+
+    public string $activeFilter = '';
+
+    protected $queryString = [
+        'search' => ['except' => ''],
+        'typeFilter' => ['except' => ''],
+        'activeFilter' => ['except' => ''],
+    ];
+
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedTypeFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedActiveFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function activate(int|string $id): void
+    {
+        try {
+            $seoMeta = RankSeoMeta::findOrFail($id);
+            $seoMeta->update(['is_active' => true]);
+            $this->notifySuccess(__('SEO entry was activated successfully!'));
+        } catch (\Exception $e) {
+            $this->notifyError(__('Failed to activate SEO entry: ').$e->getMessage());
+        }
+    }
+
+    public function deactivate(int|string $id): void
+    {
+        try {
+            $seoMeta = RankSeoMeta::findOrFail($id);
+            $seoMeta->update(['is_active' => false]);
+            $this->notifySuccess(__('SEO entry was deactivated successfully!'));
+        } catch (\Exception $e) {
+            $this->notifyError(__('Failed to deactivate SEO entry: ').$e->getMessage());
+        }
+    }
+
+    public function delete(int|string $id): void
+    {
+        try {
+            $seoMeta = RankSeoMeta::findOrFail($id);
+            $seoMeta->delete();
+            $this->notifySuccess(__('SEO entry was deleted successfully!'));
+        } catch (\Exception $e) {
+            $this->notifyError(__('Failed to delete SEO entry: ').$e->getMessage());
+        }
+    }
+
+    #[Computed]
+    public function seoEntries()
+    {
+        $query = RankSeoMeta::query();
+
+        if ($this->search) {
+            $query->where(function ($q) {
+                $q->where('title', 'like', '%'.$this->search.'%')->orWhere('description', 'like', '%'.$this->search.'%');
+            });
+        }
+
+        if ($this->typeFilter) {
+            $query->where('type', $this->typeFilter);
+        }
+
+        if ($this->activeFilter !== '') {
+            $query->where('is_active', $this->activeFilter === '1');
+        }
+
+        return $query->orderBy('updated_at', 'desc')->paginate(15);
+    }
+}; ?>
+
 <div>
+	<x-admin-panel>
 		<x-slot name="header">{{ __('SEO Entries') }}</x-slot>
 		<x-slot name="desc">
 			{{ __('Manage SEO entries for your website.') }}
@@ -73,7 +169,7 @@
 										</span>
 									</td>
 									<td class="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-										{{ Str::limit($entry->title ?? 'N/A', 50) }}</td>
+										{{ \Illuminate\Support\Str::limit($entry->title ?? 'N/A', 50) }}</td>
 									<td class="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
 										@if ($entry->is_active)
 											<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-sm bg-green-400 text-white">

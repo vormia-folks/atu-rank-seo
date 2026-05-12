@@ -6,11 +6,6 @@ use Vormia\ATURankSEO\Console\Commands\ATURankSEOHelpCommand;
 use Vormia\ATURankSEO\Console\Commands\ATURankSEOInstallCommand;
 use Vormia\ATURankSEO\Console\Commands\ATURankSEOUninstallCommand;
 use Vormia\ATURankSEO\Console\Commands\ATURankSEOUpdateCommand;
-use Vormia\ATURankSEO\Livewire\Admin\Atu\RankSeo\Edit;
-use Vormia\ATURankSEO\Livewire\Admin\Atu\RankSeo\Index;
-use Vormia\ATURankSEO\Livewire\Admin\Atu\RankSeo\MediaEdit;
-use Vormia\ATURankSEO\Livewire\Admin\Atu\RankSeo\MediaIndex;
-use Vormia\ATURankSEO\Livewire\Admin\Atu\RankSeo\Settings;
 use Vormia\ATURankSEO\Services\MediaIndexerService;
 use Vormia\ATURankSEO\Services\SeoCacheService;
 use Vormia\ATURankSEO\Services\SeoResolverService;
@@ -20,6 +15,7 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 
 class ATURankSEOServiceProvider extends ServiceProvider
 {
@@ -45,11 +41,10 @@ class ATURankSEOServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(ATURankSEO::basePath('database/migrations'));
-        $this->loadViewsFrom(ATURankSEO::basePath('resources/views'), 'aturankseo');
 
-        $this->publishes([
-            ATURankSEO::basePath('config/atu-rank-seo.php') => config_path('atu-rank-seo.php'),
-        ], 'aturankseo-config');
+        Livewire::addLocation(
+            viewPath: ATURankSEO::basePath('resources/views/livewire/admin/atu')
+        );
 
         $this->registerAdminRoutes();
 
@@ -60,6 +55,10 @@ class ATURankSEOServiceProvider extends ServiceProvider
                 ATURankSEOUninstallCommand::class,
                 ATURankSEOHelpCommand::class,
             ]);
+
+            $this->publishes([
+                ATURankSEO::basePath('config/atu-rank-seo.php') => config_path('atu-rank-seo.php'),
+            ], 'aturankseo-config');
         }
     }
 
@@ -76,11 +75,11 @@ class ATURankSEOServiceProvider extends ServiceProvider
             ->prefix($prefix)
             ->name('admin.atu.rank-seo.')
             ->group(function () {
-                Route::get('/rank-seo', Index::class)->name('index');
-                Route::get('/rank-seo/settings', Settings::class)->name('settings');
-                Route::get('/rank-seo/edit/{id}', Edit::class)->name('edit');
-                Route::get('/rank-seo/media', MediaIndex::class)->name('media.index');
-                Route::get('/rank-seo/media/edit/{id}', MediaEdit::class)->name('media.edit');
+                Route::livewire('/rank-seo', 'rank-seo.index')->name('index');
+                Route::livewire('/rank-seo/settings', 'rank-seo.settings')->name('settings');
+                Route::livewire('/rank-seo/edit/{id}', 'rank-seo.edit')->name('edit');
+                Route::livewire('/rank-seo/media', 'rank-seo.media-index')->name('media.index');
+                Route::livewire('/rank-seo/media/edit/{id}', 'rank-seo.media-edit')->name('media.edit');
             });
     }
 }

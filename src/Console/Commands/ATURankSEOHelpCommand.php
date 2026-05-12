@@ -3,11 +3,6 @@
 namespace Vormia\ATURankSEO\Console\Commands;
 
 use Vormia\ATURankSEO\ATURankSEO;
-use Vormia\ATURankSEO\Livewire\Admin\Atu\RankSeo\Edit;
-use Vormia\ATURankSEO\Livewire\Admin\Atu\RankSeo\Index;
-use Vormia\ATURankSEO\Livewire\Admin\Atu\RankSeo\MediaEdit;
-use Vormia\ATURankSEO\Livewire\Admin\Atu\RankSeo\MediaIndex;
-use Vormia\ATURankSEO\Livewire\Admin\Atu\RankSeo\Settings;
 use Illuminate\Console\Command;
 
 class ATURankSEOHelpCommand extends Command
@@ -158,17 +153,11 @@ class ATURankSEOHelpCommand extends Command
         $this->line('  <fg=white>Registered by the package when config atu-rank-seo.enabled and atu-rank-seo.admin.enabled are true:</>');
         $this->newLine();
 
-        $index = Index::class;
-        $settings = Settings::class;
-        $edit = Edit::class;
-        $mediaIndex = MediaIndex::class;
-        $mediaEdit = MediaEdit::class;
-
-        $this->line("  <fg=cyan>GET .../admin/atu/rank-seo</> → <fg=white>{$index}</>  (name: admin.atu.rank-seo.index)</>");
-        $this->line("  <fg=cyan>GET .../admin/atu/rank-seo/settings</> → <fg=white>{$settings}</>  (admin.atu.rank-seo.settings)</>");
-        $this->line("  <fg=cyan>GET .../admin/atu/rank-seo/edit/{id}</> → <fg=white>{$edit}</>  (admin.atu.rank-seo.edit)</>");
-        $this->line("  <fg=cyan>GET .../admin/atu/rank-seo/media</> → <fg=white>{$mediaIndex}</>  (admin.atu.rank-seo.media.index)</>");
-        $this->line("  <fg=cyan>GET .../admin/atu/rank-seo/media/edit/{id}</> → <fg=white>{$mediaEdit}</>  (admin.atu.rank-seo.media.edit)</>");
+        $this->line("  <fg=cyan>GET .../admin/atu/rank-seo</> → <fg=white>rank-seo.index</>  (name: admin.atu.rank-seo.index)</>");
+        $this->line("  <fg=cyan>GET .../admin/atu/rank-seo/settings</> → <fg=white>rank-seo.settings</>  (admin.atu.rank-seo.settings)</>");
+        $this->line("  <fg=cyan>GET .../admin/atu/rank-seo/edit/{id}</> → <fg=white>rank-seo.edit</>  (admin.atu.rank-seo.edit)</>");
+        $this->line("  <fg=cyan>GET .../admin/atu/rank-seo/media</> → <fg=white>rank-seo.media-index</>  (admin.atu.rank-seo.media.index)</>");
+        $this->line("  <fg=cyan>GET .../admin/atu/rank-seo/media/edit/{id}</> → <fg=white>rank-seo.media-edit</>  (admin.atu.rank-seo.media.edit)</>");
 
         $this->newLine();
         $this->line('  <fg=gray>Override middleware or prefix in config/atu-rank-seo.php (atu-rank-seo.admin.*). To disable routes, set ATU_RANKSEO_ADMIN_ENABLED=false.</>');

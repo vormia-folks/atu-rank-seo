@@ -1,5 +1,104 @@
 {{-- Stub mirror for host customization; keep in sync with resources/views/livewire/admin/atu/rank-seo/media-index.blade.php. Not copied by the installer. --}}
+<?php
+
+use Livewire\Attributes\Computed;
+use Livewire\Component;
+use Livewire\WithPagination;
+use Vormia\ATURankSEO\Livewire\Concerns\WithRankSeoToasts;
+use Vormia\ATURankSEO\Models\RankSeoMedia;
+
+new class extends Component {
+    use WithPagination;
+    use WithRankSeoToasts;
+
+    public string $search = '';
+
+    public string $typeFilter = '';
+
+    public string $activeFilter = '';
+
+    protected $queryString = [
+        'search' => ['except' => ''],
+        'typeFilter' => ['except' => ''],
+        'activeFilter' => ['except' => ''],
+    ];
+
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedTypeFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedActiveFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function activate(int|string $id): void
+    {
+        try {
+            $mediaSeo = RankSeoMedia::findOrFail($id);
+            $mediaSeo->update(['is_active' => true]);
+            $this->notifySuccess(__('Media SEO entry was activated successfully!'));
+        } catch (\Exception $e) {
+            $this->notifyError(__('Failed to activate media SEO entry: ').$e->getMessage());
+        }
+    }
+
+    public function deactivate(int|string $id): void
+    {
+        try {
+            $mediaSeo = RankSeoMedia::findOrFail($id);
+            $mediaSeo->update(['is_active' => false]);
+            $this->notifySuccess(__('Media SEO entry was deactivated successfully!'));
+        } catch (\Exception $e) {
+            $this->notifyError(__('Failed to deactivate media SEO entry: ').$e->getMessage());
+        }
+    }
+
+    public function delete(int|string $id): void
+    {
+        try {
+            $mediaSeo = RankSeoMedia::findOrFail($id);
+            $mediaSeo->delete();
+            $this->notifySuccess(__('Media SEO entry was deleted successfully!'));
+        } catch (\Exception $e) {
+            $this->notifyError(__('Failed to delete media SEO entry: ').$e->getMessage());
+        }
+    }
+
+    #[Computed]
+    public function mediaEntries()
+    {
+        $query = RankSeoMedia::query();
+
+        if ($this->search) {
+            $query->where(function ($q) {
+                $q->where('media_url', 'like', '%'.$this->search.'%')
+                    ->orWhere('title', 'like', '%'.$this->search.'%')
+                    ->orWhere('alt_text', 'like', '%'.$this->search.'%');
+            });
+        }
+
+        if ($this->typeFilter) {
+            $query->where('media_type', $this->typeFilter);
+        }
+
+        if ($this->activeFilter !== '') {
+            $query->where('is_active', $this->activeFilter === '1');
+        }
+
+        return $query->orderBy('updated_at', 'desc')->paginate(15);
+    }
+}; ?>
+
 <div>
+    <x-admin-panel>
+        <x-slot name="header">{{ __('Media SEO Manager') }}</x-slot>
         <x-slot name="desc">
             {{ __('Manage SEO metadata for media files.') }}
             {{ __('You can edit, enable/disable, or delete media SEO entries here.') }}
@@ -65,7 +164,7 @@
                             @foreach ($this->mediaEntries as $entry)
                                 <tr class="even:bg-gray-50 dark:even:bg-gray-800/50">
                                     <td class="py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-gray-100 sm:pl-3">
-                                        <code class="text-xs text-gray-600 dark:text-gray-400">{{ Str::limit($entry->media_url, 40) }}</code>
+                                        <code class="text-xs text-gray-600 dark:text-gray-400">{{ \Illuminate\Support\Str::limit($entry->media_url, 40) }}</code>
                                         @if ($entry->media_type === 'image')
                                             <div class="mt-1">
                                                 <img src="{{ asset($entry->media_url) }}" alt="{{ $entry->alt_text }}"
@@ -78,8 +177,8 @@
                                             {{ $entry->media_type }}
                                         </span>
                                     </td>
-                                    <td class="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">{{ Str::limit($entry->title ?? 'N/A', 30) }}</td>
-                                    <td class="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">{{ Str::limit($entry->alt_text ?? 'N/A', 30) }}</td>
+                                    <td class="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">{{ \Illuminate\Support\Str::limit($entry->title ?? 'N/A', 30) }}</td>
+                                    <td class="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">{{ \Illuminate\Support\Str::limit($entry->alt_text ?? 'N/A', 30) }}</td>
                                     <td class="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
                                         @if ($entry->is_active)
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-sm bg-green-400 text-white">
