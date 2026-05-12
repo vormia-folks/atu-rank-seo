@@ -1,1 +1,1 @@
-{"version":2,"defects":[],"times":{"Vormia\\ATURankSEO\\Tests\\ExampleTest::test_example":0.001}}
+{"version":2,"defects":[],"times":{"Vormia\\ATURankSEO\\Tests\\ExampleTest::test_example":0.004,"Vormia\\ATURankSEO\\Tests\\ATURankSEOTest::test_version_matches_semver_patch":0.005,"Vormia\\ATURankSEO\\Tests\\ATURankSEOTest::test_base_path_resolves_to_package_root":0.002,"Vormia\\ATURankSEO\\Tests\\ATURankSEOTest::test_base_path_suffix_resolves_package_config_file":0,"Vormia\\ATURankSEO\\Tests\\ATURankSEOTest::test_stubs_path_resolves_to_src_stubs_directory":0}}

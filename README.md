@@ -1,11 +1,13 @@
 # ATU Rank SEO
 
-A companion SEO package for the Vormia ecosystem. ATU-Rank-SEO provides centralized, snapshot-based SEO management tightly integrated with Vormia's `SlugRegistry`, enabling page-level and media-level SEO similar in spirit to Yoast SEO (WordPress), but designed for Laravel applications.
+A companion SEO package for the Vormia ecosystem. ATU Rank SEO provides centralized, snapshot-based SEO management tightly integrated with Vormia's `SlugRegistry`, enabling page-level and media-level SEO similar in spirit to Yoast SEO (WordPress), but designed for Laravel applications.
+
+Current package version: **1.3.1** (`Vormia\ATURankSEO\ATURankSEO::VERSION`).
 
 ## Features
 
 - **Snapshot-based SEO**: Resolved on save, not runtime
-- **Slug-driven**: Integrates with `vrm_slug_registry` without modifying it
+- **Slug-driven**: SEO rows reference Vormia's SlugRegistry; the package does not ship migrations that alter `vrm_slug_registry` (snapshot generation may still `firstOrCreate` a slug row — see developer guide)
 - **Page & Media SEO**: Support for both page-level and media-level SEO
 - **Cache-first**: Optimized for performance with cache-first resolution
 - **UI-driven Management**: Admin panel for managing SEO entries
@@ -29,10 +31,10 @@ php artisan aturankseo:install
 This will:
 
 - Optionally add environment variables to `.env` and `.env.example` (unless `--skip-env`)
-- Optionally run `php artisan migrate` (with confirmation)
-- Optionally run the package seeder (with confirmation)
+- Optionally run `php artisan migrate` (interactive confirmation; default **yes**)
+- Optionally run the package seeder (only after migrations succeed; interactive confirmation; default **yes** — you can answer **no** to skip seeding)
 
-The installer does **not** copy migrations, views, or routes into your app. Migrations load from the package; admin UI views load via `loadViewsFrom` using the `aturankseo` namespace. Optional config publish:
+The installer does **not** copy migrations, views, or routes into your app. Migrations load from the package via `loadMigrationsFrom`. Admin Livewire screens live in the package under `resources/views/livewire/admin/atu/`; `ATURankSEOServiceProvider` registers them with `Livewire::addLocation` and `Route::livewire(...)`. Optional config publish:
 
 ```bash
 php artisan vendor:publish --tag=aturankseo-config
@@ -58,8 +60,8 @@ Publish to `config/atu-rank-seo.php` with the tag above. You can customize:
 
 - Global `enabled` and admin `enabled`, `middleware`, `prefix`
 - Cache TTL and prefix
-- Default placeholder variables
-- Media directory path and supported media types
+- `default_variables` — suggested defaults only (not wired into `SeoSnapshotService` placeholder resolution; use `dynamic_variables` in settings or pass values in `$data`)
+- `media_directory` / `media_types` — documented intent for media handling; `MediaIndexerService::scanAndRegister()` currently scans **`public/media`** (see source if this changes)
 
 ## Usage
 
@@ -105,7 +107,7 @@ use Vormia\ATURankSEO\Services\MediaIndexerService;
 
 $mediaIndexer = app(MediaIndexerService::class);
 
-// Scan and register all media files
+// Scan public/media recursively and register new files (paths relative to public/, e.g. media/photo.jpg)
 $mediaIndexer->scanAndRegister();
 
 // Register a single media file
@@ -203,30 +205,27 @@ It does **not** edit `routes/web.php` (routes are owned by the package while it 
 
 ## Placeholder Resolution
 
-SEO fields support placeholders that are resolved on save:
+SEO string fields support `{placeholder}` tokens (letters, numbers, underscore). They are resolved **on save** inside `SeoSnapshotService`, not when reading cached SEO.
 
-- `{make}` — Vehicle make
-- `{model}` — Vehicle model
-- `{year}` — Year
-- `{site_name}` — Site name (from config or settings)
-- `{current_year}` — Current year
-- `{current_month}` — Current month name
-- `{current_date}` — Current date
+Typical examples:
 
-Resolution order:
+- `{make}`, `{model}`, `{year}` — pass these keys in the `$data` array when calling `generateForSlug` / `generateForMedia`, or store them in **Global settings → dynamic variables** (`atu_rankseo_settings.dynamic_variables` JSON).
+- `{current_year}`, `{current_month}`, `{current_date}` — always set from the server date at resolution time (they override the same keys if present in merged variables).
 
-1. Data provided when generating the snapshot
-2. Global SEO variables from settings
-3. Built-in variables (current_year, etc.)
+Merge behavior in code: `dynamic_variables` from settings are merged first, then the snapshot `$data` array (so **per-call data wins** on duplicate keys), then `current_year` / `current_month` / `current_date` are applied.
+
+`config('atu-rank-seo.default_variables')` defines suggested defaults (for example `site_name`) but is **not** automatically merged into placeholder resolution today; put `site_name` (and similar) in `dynamic_variables` or pass them in `$data` when generating snapshots.
 
 ## Caching
 
-SEO data is cached for performance. Cache keys follow the pattern:
+SEO data is cached for performance. `SeoCacheService` builds keys from `config('atu-rank-seo.cache.prefix')` (default `atu_rankseo`) and TTL from `config('atu-rank-seo.cache.ttl')` / `ATU_RANKSEO_CACHE_TTL`:
 
-- Page SEO: `atu_rankseo:slug:{slug_registry_id}:{type}`
-- Media SEO: `atu_rankseo:media:{md5(media_url)}`
+- Page SEO: `{prefix}:slug:{slug_registry_id}:{type}`
+- Media SEO: `{prefix}:media:{md5(media_url)}`
 
-Cache is invalidated when SEO entries are updated, deleted, or activated or deactivated.
+Cache entries are invalidated when matching SEO rows are written or removed via the snapshot, resolver, and media indexer services (for example after save, soft delete / deactivate, or media registration).
+
+`SeoCacheService::clearAll()` calls `Cache::flush()` (entire application cache); use with care.
 
 ## Requirements
 
@@ -242,4 +241,4 @@ MIT
 
 ## Support
 
-Developer guide: [docs/atu-rank-seo.md](docs/atu-rank-seo.md). For issues and questions, use the package repository.
+Developer guide: [docs/atu-rank-seo.md](docs/atu-rank-seo.md). Framework references: [Laravel documentation](https://laravel.com/docs), [Livewire 4](https://livewire.laravel.com/docs). For issues and questions, use the package repository.
