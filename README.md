@@ -154,9 +154,47 @@ These paths are under the package root (or `vendor/vormia-folks/atu-rank-seo/` w
 
 ### Sidebar (Flux)
 
-The reference file contains **two** snippets: `flux:navlist.item` (admin panel / navlist) and `flux:sidebar.item` (inject inside `flux:sidebar.group`, e.g. Platform, before `</flux:sidebar.group>`). Paste the section that matches your layout:
+The installer does **not** modify your app sidebar. You add Rank SEO links manually. The reference stub has **two** sections (navlist vs sidebar); **Section 1** is duplicated below so you can paste from this README. **Section 2** (`flux:sidebar.item` only) lives in the stub file—open it when your layout uses `flux:sidebar.group` instead of navlist:
 
-`vendor/vormia-folks/atu-rank-seo/src/stubs/reference/sidebar-menu-to-add.blade.php`
+- **In this repo:** `src/stubs/reference/sidebar-menu-to-add.blade.php`
+- **When installed via Composer:** `vendor/vormia-folks/atu-rank-seo/src/stubs/reference/sidebar-menu-to-add.blade.php`
+
+**Section 1 — Flux navlist (admin panel style)** — paste into your admin layout next to other ATU `flux:navlist.item` entries, same nesting level as siblings:
+
+```blade
+{{-- >>> ATU Rank SEO Sidebar START --}}
+@if (auth()->user()?->isAdminOrSuperAdmin())
+	<hr />
+
+	{{-- SEO Entries --}}
+	<flux:navlist.item icon="magnifying-glass" :href="route('admin.atu.rank-seo.index')"
+		:current="request()->routeIs('admin.atu.rank-seo.index') || request()->routeIs('admin.atu.rank-seo.edit')" wire:navigate>
+		{{ __('SEO Entries') }}
+	</flux:navlist.item>
+
+	{{-- Media SEO --}}
+	<flux:navlist.item icon="photo" :href="route('admin.atu.rank-seo.media.index')"
+		:current="request()->routeIs('admin.atu.rank-seo.media.*')" wire:navigate>
+		{{ __('Media SEO') }}
+	</flux:navlist.item>
+
+	{{-- SEO Settings --}}
+	<flux:navlist.item icon="cog-6-tooth" :href="route('admin.atu.rank-seo.settings')"
+		:current="request()->routeIs('admin.atu.rank-seo.settings')" wire:navigate>
+		{{ __('SEO Settings') }}
+	</flux:navlist.item>
+@endif
+{{-- <<< ATU Rank SEO Sidebar END --}}
+```
+
+**How to add it**
+
+1. Open your admin layout Blade file (the one that renders your Flux sidebar or navlist—often something like `resources/views/components/layouts/app/sidebar.blade.php` or your ATU admin shell; the exact path depends on your Vormia app).
+2. Pick the section that matches your UI:
+   - **Section 1** (above): Flux **navlist**. You can copy from the code block or from the same lines in `sidebar-menu-to-add.blade.php`. Keep the marker comments if you want an easy search on uninstall.
+   - **Section 2** (`flux:sidebar.item` …): Flux **sidebar** with `flux:sidebar.group`—copy the three items from the stub only, paste **inside** the appropriate `flux:sidebar.group` (for example “Platform”), **before** `</flux:sidebar.group>`. If that layout is not already admin-only, wrap them in the same `@if (auth()->user()?->isAdminOrSuperAdmin())` pattern as Section 1 (see the comment above Section 2 in the stub).
+3. Ensure admin routes are registered (see [Routes (default)](#routes-default) / [Manual routes (optional)](#manual-routes-optional)) so `route('admin.atu.rank-seo.*')` resolves.
+4. On uninstall, remove the pasted block (search for `ATU Rank SEO Sidebar` or the route names if you kept the markers).
 
 ## Commands
 
